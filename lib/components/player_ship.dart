@@ -23,7 +23,7 @@ class PlayerShip extends PositionComponent
   
   // Shooting timer variables
   double _fireCooldown = 0.0;
-  static const double fireInterval = 0.22; // Auto-fires every 220 milliseconds
+  static const double fireInterval = 0.12; // Auto-fires every 120 milliseconds
 
   PlayerShip() : super(priority: 10);
 

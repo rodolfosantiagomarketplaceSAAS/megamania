@@ -117,6 +117,43 @@ class _HUDState extends State<HUD> with SingleTickerProviderStateMixin {
                   ],
                 ),
 
+                // Pause Button
+                GestureDetector(
+                  onTap: () {
+                    game.playClick();
+                    game.togglePause();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A).withOpacity(0.65),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF00E5FF), width: 1.2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00E5FF).withOpacity(0.15),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.pause, size: 14, color: Color(0xFF00E5FF)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'PAUSE',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF00E5FF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // Remaining Lives
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
