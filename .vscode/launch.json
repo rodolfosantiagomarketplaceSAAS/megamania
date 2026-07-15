@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "megamania (Development)",
+      "request": "launch",
+      "type": "dart",
+      "toolArgs": [
+        "--dart-define",
+        "SUPABASE_URL=https://SUA_URL_DO_SUPABASE.supabase.co",
+        "--dart-define",
+        "SUPABASE_ANON_KEY=SEU_ANON_KEY_DO_SUPABASE"
+      ]
+    }
+  ]
+}

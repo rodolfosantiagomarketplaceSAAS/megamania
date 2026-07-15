@@ -3,23 +3,34 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../enemy_component.dart';
 
-class SiderealWheel extends EnemyComponent {
-  final double speedY;
+class TireEnemy extends EnemyComponent {
   final double speedX;
-  
-  double directionX; // 1.0 for Right, -1.0 for Left
+  final double incrementY;
+  final double baseShotChance;
 
-  SiderealWheel({
+  double direction; // 1.0 for Right, -1.0 for Left
+
+  TireEnemy({
     required Vector2 position,
-    this.speedY = 85.0,
     this.speedX = 130.0,
-    this.directionX = 1.0,
+    this.incrementY = 36.0,
+    this.direction = 1.0,
+    this.baseShotChance = 0.10,
   }) : super(
           position: position,
           size: Vector2(40.0, 40.0),
-          pointsReward: 200,
-          energyReward: 20.0,
+          pointsReward: 50,
+          energyReward: 15.0,
         );
+
+  @override
+  double get shotChance => baseShotChance;
+
+  @override
+  double get shotInterval => 1.0;
+
+  @override
+  Color get explosionColor => const Color(0xFF00E5FF);
 
   @override
   void update(double dt) {
@@ -27,17 +38,18 @@ class SiderealWheel extends EnemyComponent {
 
     final double halfWidth = size.x / 2;
 
-    // Linear diagonal translation
-    position.y += speedY * dt;
-    position.x += speedX * directionX * dt;
+    // Linear horizontal translation
+    position.x += speedX * direction * dt;
 
-    // Elastic reflection (bounce) on screen side borders
-    if (directionX < 0.0 && position.x <= halfWidth) {
+    // Boundary check and bounce behavior
+    if (direction < 0.0 && position.x <= halfWidth) {
       position.x = halfWidth;
-      directionX = 1.0;
-    } else if (directionX > 0.0 && position.x >= gameRef.canvasSize.x - halfWidth) {
+      direction = 1.0;
+      position.y += incrementY;
+    } else if (direction > 0.0 && position.x >= gameRef.canvasSize.x - halfWidth) {
       position.x = gameRef.canvasSize.x - halfWidth;
-      directionX = -1.0;
+      direction = -1.0;
+      position.y += incrementY;
     }
   }
 
@@ -51,7 +63,7 @@ class SiderealWheel extends EnemyComponent {
     canvas.translate(radius, radius);
     
     // Continuous rotation to simulate rolling
-    final double rotationAngle = accumulatedTime * 6.0 * directionX;
+    final double rotationAngle = accumulatedTime * 6.0 * direction;
     canvas.rotate(rotationAngle);
 
     // 1. Draw Outer Tire Rim (Dark slate/neon blue theme)

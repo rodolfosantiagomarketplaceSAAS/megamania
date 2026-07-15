@@ -1,9 +1,13 @@
 import 'package:flame/components.dart';
-import 'package:flame_audio/flame_audio.dart';
 import '../components/enemy_component.dart';
-import '../components/enemies/winged_hamburger.dart';
-import '../components/enemies/cosmic_die.dart';
-import '../components/enemies/sidereal_wheel.dart';
+import '../components/enemies/hamburger_enemy.dart';
+import '../components/enemies/cookie_enemy.dart';
+import '../components/enemies/bug_enemy.dart';
+import '../components/enemies/tire_enemy.dart';
+import '../components/enemies/die_enemy.dart';
+import '../components/enemies/iron_enemy.dart';
+import '../components/enemies/bowtie_enemy.dart';
+import '../components/enemies/block_enemy.dart';
 import 'megamania_game.dart';
 
 class WaveManager extends Component with HasGameRef<MegamaniaGame> {
@@ -11,8 +15,6 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   
   int _enemiesToSpawn = 0;
   int _enemiesSpawned = 0;
-  double _spawnTimer = 0.0;
-  double _spawnInterval = 1.0;
 
   // Level transition status
   bool _inTransition = false;
@@ -24,14 +26,8 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     clearActiveEnemies();
     _inTransition = false;
     _transitionTimer = 0.0;
-    _enemiesSpawned = 0;
     
-    // Scale count: base of 8, adding 2 more enemies per level
-    _enemiesToSpawn = 8 + (gameRef.wave * 2);
-    
-    // Scaled frequency of spawns: becomes quicker on subsequent waves
-    _spawnInterval = (1.3 - (gameRef.wave * 0.08)).clamp(0.45, 1.6);
-    _spawnTimer = 0.0;
+    _spawnAllEnemies();
   }
 
   /// Wipe all active enemies from the viewport
@@ -63,91 +59,127 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       return;
     }
 
-    // Spawn logic
-    if (_enemiesSpawned < _enemiesToSpawn) {
-      _spawnTimer += dt;
-      if (_spawnTimer >= _spawnInterval) {
-        _spawnTimer = 0.0;
-        _spawnEnemy();
+    // Check if all spawned enemies are cleared to advance waves
+    bool hasActiveEnemies = false;
+    for (final child in gameRef.children) {
+      if (child is EnemyComponent) {
+        hasActiveEnemies = true;
+        break;
       }
-    } else {
-      // Check if all spawned enemies are cleared to advance waves
-      bool hasActiveEnemies = false;
-      for (final child in gameRef.children) {
-        if (child is EnemyComponent) {
-          hasActiveEnemies = true;
-          break;
-        }
-      }
-      if (!hasActiveEnemies) {
-        _inTransition = true;
-        _transitionTimer = 0.0;
-        
-        // Award massive phase bonus
-        gameRef.awardKill(300 * gameRef.wave, 35.0);
+    }
 
-        try {
-          gameRef.playPowerUp();
-        } catch (e) {
-          // Fail gracefully
-        }
+    if (!hasActiveEnemies) {
+      _inTransition = true;
+      _transitionTimer = 0.0;
+      
+      // Award massive phase bonus
+      gameRef.awardKill(300 * gameRef.wave, 35.0);
+
+      try {
+        gameRef.playPowerUp();
+      } catch (e) {
+        // Fail gracefully
       }
     }
   }
 
-  void _spawnEnemy() {
-    _enemiesSpawned++;
+  void _spawnAllEnemies() {
+    final int phaseType = (gameRef.wave - 1) % 8;
+    final int cycle = (gameRef.wave - 1) ~/ 8;
+    // Speed increases by 25% per full cycle (after phase 8)
+    final double difficultyMultiplier = 1.0 + (cycle * 0.25);
 
-    // Alternates enemies every 3 waves
-    final int enemyType = (gameRef.wave - 1) % 3;
+    const int count = 12;
+    _enemiesToSpawn = count;
+    _enemiesSpawned = count;
+
     final double screenWidth = gameRef.canvasSize.x;
-    
-    // Scale speed linearly with the wave number
-    final double speedScale = 1.0 + (gameRef.wave - 1) * 0.12;
+    final double margin = 40.0;
+    final double availableWidth = screenWidth - (margin * 2);
+    final double spacing = availableWidth / (count - 1);
 
-    EnemyComponent enemy;
+    for (int i = 0; i < count; i++) {
+      final double xPos = margin + i * spacing;
+      // Start near the top
+      final double yPos = 60.0;
 
-    switch (enemyType) {
-      case 0:
-        // Winged Hamburger (Wave 1, 4, 7...)
-        final double divisor = (screenWidth - 80.0).clamp(1.0, double.infinity);
-        final double xPos = 40.0 + (_enemiesSpawned * 89.0) % divisor;
-        enemy = WingedHamburger(
-          position: Vector2(xPos, -30.0),
-          speedY: 65.0 * speedScale,
-          amplitude: 50.0 + (gameRef.wave * 2.0).clamp(0.0, 40.0),
-          frequency: 3.5 + (gameRef.wave * 0.15).clamp(0.0, 2.5),
-        );
-        break;
-      case 1:
-        // Cosmic Die (Wave 2, 5, 8...)
-        // Alternate entering from Left and Right edges at varied Y heights
-        final bool isLeft = _enemiesSpawned % 2 == 0;
-        final double startX = isLeft ? -30.0 : screenWidth + 30.0;
-        final double startY = 40.0 + (_enemiesSpawned * 36.0) % 220.0;
-        enemy = CosmicDie(
-          position: Vector2(startX, startY),
-          speedX: 150.0 * speedScale,
-          direction: isLeft ? 1.0 : -1.0,
-          incrementY: 26.0 + (gameRef.wave * 1.5).clamp(0.0, 14.0),
-        );
-        break;
-      case 2:
-      default:
-        // Sidereal Wheel (Wave 3, 6, 9...)
-        final double divisor = (screenWidth - 80.0).clamp(1.0, double.infinity);
-        final double xPos = 40.0 + (_enemiesSpawned * 103.0) % divisor;
-        final double direction = _enemiesSpawned % 2 == 0 ? 1.0 : -1.0;
-        enemy = SiderealWheel(
-          position: Vector2(xPos, -30.0),
-          speedY: 75.0 * speedScale,
-          speedX: 110.0 * speedScale,
-          directionX: direction,
-        );
-        break;
+      final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, i);
+      gameRef.add(enemy);
     }
+  }
 
-    gameRef.add(enemy);
+  EnemyComponent _createEnemy(int type, double x, double y, double multiplier, int index) {
+    final double startDir = 1.0;
+    final Vector2 startPos = Vector2(x, y);
+
+    switch (type) {
+      case 0:
+        // Phase 1: Hamburger (Classic linear speed 120, bounce/descend, shot chance 5%)
+        return HamburgerEnemy(
+          position: startPos,
+          speedX: 120.0 * multiplier,
+          direction: startDir,
+          baseShotChance: (0.05 * multiplier).clamp(0.0, 0.8),
+        );
+      case 1:
+        // Phase 2: Cookie (Sinusoidal downward movement, speed 140, shot chance 7%)
+        return CookieEnemy(
+          position: startPos,
+          speedY: 140.0 * multiplier,
+          baseShotChance: (0.07 * multiplier).clamp(0.0, 0.8),
+        );
+      case 2:
+        // Phase 3: Bug (Crisscross diagonal speed 150, shot chance 9%)
+        return BugEnemy(
+          position: startPos,
+          speedY: 80.0 * multiplier,
+          speedX: 150.0 * multiplier,
+          directionX: index % 2 == 0 ? 1.0 : -1.0,
+          baseShotChance: (0.09 * multiplier).clamp(0.0, 0.8),
+        );
+      case 3:
+        // Phase 4: Tire (Linear speed 130, bounce/descend, shot chance 10%)
+        return TireEnemy(
+          position: startPos,
+          speedX: 130.0 * multiplier,
+          direction: startDir,
+          baseShotChance: (0.10 * multiplier).clamp(0.0, 0.8),
+        );
+      case 4:
+        // Phase 5: Die (Crisscross diagonal speed 160, shot chance 12%)
+        return DieEnemy(
+          position: startPos,
+          speedY: 80.0 * multiplier,
+          speedX: 160.0 * multiplier,
+          directionX: index % 2 == 0 ? 1.0 : -1.0,
+          baseShotChance: (0.12 * multiplier).clamp(0.0, 0.8),
+        );
+      case 5:
+        // Phase 6: Iron (Linear speed 140, bounce/descend, shot chance 15%)
+        return IronEnemy(
+          position: startPos,
+          speedX: 140.0 * multiplier,
+          direction: startDir,
+          baseShotChance: (0.15 * multiplier).clamp(0.0, 0.8),
+        );
+      case 6:
+        // Phase 7: Bowtie (Sinusoidal downward movement, speed 170, shot chance 18%)
+        return BowtieEnemy(
+          position: startPos,
+          speedY: 170.0 * multiplier,
+          baseShotChance: (0.18 * multiplier).clamp(0.0, 0.8),
+        );
+      case 7:
+      default:
+        // Phase 8: Block (Crisscross diagonal speed 180, shot chance 22%)
+        return BlockEnemy(
+          position: startPos,
+          speedY: 85.0 * multiplier,
+          speedX: 180.0 * multiplier,
+          directionX: index % 2 == 0 ? 1.0 : -1.0,
+          baseShotChance: (0.22 * multiplier).clamp(0.0, 0.8),
+        );
+    }
   }
 
   /// Exposes whether a transition is happening to overlay widgets

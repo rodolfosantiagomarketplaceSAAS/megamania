@@ -3,45 +3,52 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../enemy_component.dart';
 
-class CosmicDie extends EnemyComponent {
+class DieEnemy extends EnemyComponent {
+  final double speedY;
   final double speedX;
-  final double incrementY;
-  
-  double direction; // 1.0 for Right, -1.0 for Left
+  final double baseShotChance;
 
-  CosmicDie({
+  double directionX; // 1.0 for Right, -1.0 for Left
+
+  DieEnemy({
     required Vector2 position,
-    this.speedX = 180.0,
-    this.incrementY = 32.0,
-    this.direction = 1.0,
+    this.speedY = 80.0,
+    this.speedX = 160.0,
+    this.directionX = 1.0,
+    this.baseShotChance = 0.12,
   }) : super(
           position: position,
           size: Vector2(38.0, 38.0),
-          pointsReward: 150,
+          pointsReward: 60,
           energyReward: 16.0,
         );
 
   @override
-  Color get explosionColor => const Color(0xFF00FFCC); // Neon Teal
+  double get shotChance => baseShotChance;
+
+  @override
+  double get shotInterval => 1.0;
+
+  @override
+  Color get explosionColor => const Color(0xFFE040FB);
 
   @override
   void update(double dt) {
     super.update(dt);
 
     final double halfWidth = size.x / 2;
-    
-    // Linear horizontal translation
-    position.x += speedX * direction * dt;
 
-    // Boundary check and bounce behavior
-    if (direction < 0.0 && position.x <= halfWidth) {
+    // Diagonal translation
+    position.y += speedY * dt;
+    position.x += speedX * directionX * dt;
+
+    // Bounce on side borders
+    if (directionX < 0.0 && position.x <= halfWidth) {
       position.x = halfWidth;
-      direction = 1.0;
-      position.y += incrementY;
-    } else if (direction > 0.0 && position.x >= gameRef.canvasSize.x - halfWidth) {
+      directionX = 1.0;
+    } else if (directionX > 0.0 && position.x >= gameRef.canvasSize.x - halfWidth) {
       position.x = gameRef.canvasSize.x - halfWidth;
-      direction = -1.0;
-      position.y += incrementY;
+      directionX = -1.0;
     }
   }
 
@@ -52,7 +59,7 @@ class CosmicDie extends EnemyComponent {
     canvas.save();
 
     // Visual micro-animation: slow rotation of the die
-    final double rotationAngle = accumulatedTime * 1.5 * direction;
+    final double rotationAngle = accumulatedTime * 1.5 * directionX;
     canvas.translate(size.x / 2, size.y / 2);
     canvas.rotate(rotationAngle);
     canvas.translate(-size.x / 2, -size.y / 2);

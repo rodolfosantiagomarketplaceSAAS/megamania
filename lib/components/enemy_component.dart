@@ -1,8 +1,10 @@
+import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import '../game/megamania_game.dart';
+import 'laser.dart';
 import 'visual_effects.dart';
 
 abstract class EnemyComponent extends PositionComponent 
@@ -12,6 +14,11 @@ abstract class EnemyComponent extends PositionComponent
   final double energyReward;
   
   double accumulatedTime = 0.0;
+  double _shootTimer = 0.0;
+
+  // Configuration for subclass shooting capabilities
+  double get shotChance => 0.0;
+  double get shotInterval => 1.0;
 
   // Custom explosion particle color for subclasses to override
   Color get explosionColor => const Color(0xFFFF007F); // Default to neon pink
@@ -51,9 +58,31 @@ abstract class EnemyComponent extends PositionComponent
     // Track lifetime for mathematical equations
     accumulatedTime += dt;
 
+    if (gameRef.state == GameState.playing) {
+      tryShoot(dt);
+    }
+
     // Automated garbage collection: remove if it exits screen from the bottom
     if (position.y > gameRef.canvasSize.y + size.y) {
       removeFromParent();
     }
+  }
+
+  void tryShoot(double dt) {
+    if (shotChance <= 0.0) return;
+    _shootTimer += dt;
+    if (_shootTimer >= shotInterval) {
+      _shootTimer = 0.0;
+      if (Random().nextDouble() < shotChance) {
+        _fireLaser();
+      }
+    }
+  }
+
+  void _fireLaser() {
+    gameRef.add(Laser(
+      position: position + Vector2(0.0, size.y * 0.5),
+      isPlayerLaser: false,
+    ));
   }
 }

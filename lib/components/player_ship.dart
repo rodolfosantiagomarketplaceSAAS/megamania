@@ -23,7 +23,7 @@ class PlayerShip extends PositionComponent
   
   // Shooting timer variables
   double _fireCooldown = 0.0;
-  static const double fireInterval = 0.250; // Auto-fires every 250 milliseconds
+  static const double fireInterval = 0.22; // Auto-fires every 220 milliseconds
 
   PlayerShip() : super(priority: 10);
 
@@ -67,7 +67,7 @@ class PlayerShip extends PositionComponent
     }
 
     // Apply linear horizontal translation
-    const double speed = 360.0; // pixels per second
+    const double speed = 450.0; // pixels per second
     position.x += _currentMoveInput * speed * dt;
 
     // Hard X-axis boundaries clamping (clamping ship size to screen margins)
@@ -83,9 +83,10 @@ class PlayerShip extends PositionComponent
         gameRef.dragInputController.isFiring;
 
     // Handle weapon systems fire cooldowns
+    final bool hasActiveLaser = gameRef.children.whereType<Laser>().any((l) => l.isPlayerLaser);
     _fireCooldown += dt;
     if (isFiring) {
-      if (_fireCooldown >= fireInterval) {
+      if (_fireCooldown >= fireInterval && !hasActiveLaser) {
         _fireCooldown = 0.0;
         _fireLasers();
       }
@@ -98,22 +99,11 @@ class PlayerShip extends PositionComponent
   }
 
   void _fireLasers() {
-    // Fires dual parallel lasers from the wing tips that follow the ship's movement
-    final double leftOffset = -size.x * 0.35;
-    final double rightOffset = size.x * 0.35;
-
-    final Vector2 leftWing = position + Vector2(leftOffset, -size.y * 0.5);
-    final Vector2 rightWing = position + Vector2(rightOffset, -size.y * 0.5);
-
+    // Fires a single central laser that follows the ship's movement
     gameRef.add(Laser(
-      position: leftWing,
+      position: position + Vector2(0.0, -size.y * 0.5),
       isPlayerLaser: true,
-      offsetX: leftOffset,
-    ));
-    gameRef.add(Laser(
-      position: rightWing,
-      isPlayerLaser: true,
-      offsetX: rightOffset,
+      offsetX: 0.0,
     ));
 
     try {
