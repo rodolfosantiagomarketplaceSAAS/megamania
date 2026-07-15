@@ -22,11 +22,15 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   double _transitionTimer = 0.0;
   static const double transitionDelay = 2.2; // Seconds between levels
 
+  // Shared direction for block-movement enemies (Hamburger, Tire, Iron)
+  double enemyDirection = 1.0;
+
   /// Configures parameters for the current wave level
   void resetWave() {
     clearActiveEnemies();
     _inTransition = false;
     _transitionTimer = 0.0;
+    enemyDirection = 1.0;
     
     _spawnAllEnemies();
   }
@@ -61,11 +65,12 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     }
 
     // Check if all spawned enemies are cleared to advance waves
+    final List<EnemyComponent> enemies = [];
     bool hasActiveEnemies = false;
     for (final child in gameRef.children) {
       if (child is EnemyComponent) {
         hasActiveEnemies = true;
-        break;
+        enemies.add(child);
       }
     }
 
@@ -80,6 +85,37 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         gameRef.playPowerUp();
       } catch (e) {
         // Fail gracefully
+      }
+    } else {
+      // Handle collective border detection for block-movement enemies
+      bool shouldDescend = false;
+      double newDirection = enemyDirection;
+
+      for (final enemy in enemies) {
+        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+          final double halfWidth = enemy.size.x / 2;
+          if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
+            shouldDescend = true;
+            newDirection = -1.0;
+            break;
+          } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
+            shouldDescend = true;
+            newDirection = 1.0;
+            break;
+          }
+        }
+      }
+
+      if (shouldDescend) {
+        enemyDirection = newDirection;
+        for (final enemy in enemies) {
+          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+            enemy.position.y += 36.0; // descend
+            if (enemy is HamburgerEnemy) enemy.direction = newDirection;
+            if (enemy is TireEnemy) enemy.direction = newDirection;
+            if (enemy is IronEnemy) enemy.direction = newDirection;
+          }
+        }
       }
     }
   }

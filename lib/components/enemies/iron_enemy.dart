@@ -35,22 +35,8 @@ class IronEnemy extends EnemyComponent {
   @override
   void update(double dt) {
     super.update(dt);
-
-    final double halfWidth = size.x / 2;
-
-    // Linear horizontal translation
+    // Move horizontally (direction and descend managed collectively by WaveManager)
     position.x += speedX * direction * dt;
-
-    // Boundary check and bounce behavior
-    if (direction < 0.0 && position.x <= halfWidth) {
-      position.x = halfWidth;
-      direction = 1.0;
-      position.y += incrementY;
-    } else if (direction > 0.0 && position.x >= gameRef.canvasSize.x - halfWidth) {
-      position.x = gameRef.canvasSize.x - halfWidth;
-      direction = -1.0;
-      position.y += incrementY;
-    }
   }
 
   Sprite? _sprite;

@@ -21,8 +21,15 @@ void main(List<String> args) {
   }
   
   print('Processing ${args[0]} (${image.width}x${image.height})...');
+  
+  // Ensure the image has an alpha channel (RGBA)
+  var rgbaImage = image;
+  if (rgbaImage.numChannels < 4) {
+    rgbaImage = rgbaImage.convert(numChannels: 4);
+  }
+
   int count = 0;
-  for (final pixel in image) {
+  for (final pixel in rgbaImage) {
     // Check if pixel is close to black (RGB < 18)
     if (pixel.r < 18 && pixel.g < 18 && pixel.b < 18) {
       pixel.a = 0;
@@ -30,7 +37,7 @@ void main(List<String> args) {
     }
   }
   
-  final outputBytes = img.encodePng(image);
+  final outputBytes = img.encodePng(rgbaImage);
   file.writeAsBytesSync(outputBytes);
-  print('Done! Replaced $count black pixels with transparent pixels.');
+  print('Done! Replaced $count black pixels with transparent pixels. numChannels: ${rgbaImage.numChannels}');
 }
