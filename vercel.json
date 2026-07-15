@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "outputDirectory": "build/web",
+  "framework": null,
+  "cleanUrls": true,
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
