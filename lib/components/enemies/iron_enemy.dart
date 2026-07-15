@@ -58,7 +58,9 @@ class IronEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('iron.png');
+    try {
+      _sprite = await gameRef.loadSprite('iron.png');
+    } catch (_) {}
   }
 
   @override

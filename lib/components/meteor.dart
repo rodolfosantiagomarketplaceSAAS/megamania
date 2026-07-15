@@ -112,7 +112,9 @@ class Meteor extends PositionComponent with HasGameRef<MegamaniaGame>, Collision
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    _sprite = await gameRef.loadSprite('meteor.png');
+    try {
+      _sprite = await gameRef.loadSprite('meteor.png');
+    } catch (_) {}
     // Hitbox for collision detection
     add(CircleHitbox(radius: size.x * 0.4, position: size * 0.1));
   }

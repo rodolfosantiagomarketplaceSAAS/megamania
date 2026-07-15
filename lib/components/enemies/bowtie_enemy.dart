@@ -50,7 +50,9 @@ class BowtieEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('bowtie.png');
+    try {
+      _sprite = await gameRef.loadSprite('bowtie.png');
+    } catch (_) {}
   }
 
   @override

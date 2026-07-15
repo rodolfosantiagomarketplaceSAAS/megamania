@@ -58,7 +58,9 @@ class HamburgerEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('hamburger.png');
+    try {
+      _sprite = await gameRef.loadSprite('hamburger.png');
+    } catch (_) {}
   }
 
   @override

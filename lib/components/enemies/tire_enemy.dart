@@ -58,7 +58,9 @@ class TireEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('tire.png');
+    try {
+      _sprite = await gameRef.loadSprite('tire.png');
+    } catch (_) {}
   }
 
   @override

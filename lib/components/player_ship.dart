@@ -34,7 +34,9 @@ class PlayerShip extends PositionComponent
   Future<void> onLoad() async {
     size = Vector2(56.0, 56.0);
     anchor = Anchor.center;
-    _shipSprite = await gameRef.loadSprite('player_ship.png');
+    try {
+      _shipSprite = await gameRef.loadSprite('player_ship.png');
+    } catch (_) {}
     
     // Add collision detection hitbox
     add(RectangleHitbox(

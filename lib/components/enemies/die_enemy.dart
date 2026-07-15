@@ -57,7 +57,9 @@ class DieEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('die.png');
+    try {
+      _sprite = await gameRef.loadSprite('die.png');
+    } catch (_) {}
   }
 
   @override

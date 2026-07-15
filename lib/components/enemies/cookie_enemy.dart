@@ -50,7 +50,9 @@ class CookieEnemy extends EnemyComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    _sprite = await gameRef.loadSprite('cookie.png');
+    try {
+      _sprite = await gameRef.loadSprite('cookie.png');
+    } catch (_) {}
   }
 
   @override

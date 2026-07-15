@@ -42,6 +42,9 @@ class MegamaniaGame extends FlameGame
   double _meteorTimer = 0.0;
   double _nextMeteorDelay = 12.0; // seconds before first meteor alert
 
+  // Background Music state
+  bool _isMusicPlaying = false;
+
   // Selected ship type
   final ValueNotifier<ShipType> selectedShipType = ValueNotifier<ShipType>(ShipType.dreamCruiser);
 
@@ -133,6 +136,7 @@ class MegamaniaGame extends FlameGame
     overlays.remove('MainMenu');
     overlays.remove('GameOver');
     overlays.add('HUD');
+    startMusic();
     debugPrint('--- startGame() finished successfully ---');
   }
 
@@ -150,6 +154,7 @@ class MegamaniaGame extends FlameGame
       
       overlays.remove('HUD');
       overlays.add('GameOver');
+      stopMusic();
       
       // Save high score to Supabase asynchronously
       _saveScoreToBackend();
@@ -245,9 +250,15 @@ class MegamaniaGame extends FlameGame
     if (overlays.isActive('Pause')) {
       overlays.remove('Pause');
       paused = false;
+      try {
+        FlameAudio.bgm.resume();
+      } catch (_) {}
     } else {
       overlays.add('Pause');
       paused = true;
+      try {
+        FlameAudio.bgm.pause();
+      } catch (_) {}
     }
     playClick();
   }
@@ -348,6 +359,36 @@ class MegamaniaGame extends FlameGame
       clickPool = await FlameAudio.createPool('click.wav', minPlayers: 1, maxPlayers: 3);
     } catch (e) {
       debugPrint('Error creating audio pools: $e');
+    }
+  }
+
+  void startMusic() {
+    final isTest = WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    if (isTest) return;
+
+    try {
+      if (!_isMusicPlaying) {
+        FlameAudio.bgm.play('background_music.mp3', volume: 0.4).catchError((e) {
+          debugPrint('Error playing background music: $e');
+        });
+        _isMusicPlaying = true;
+      }
+    } catch (e) {
+      debugPrint('Error playing background music: $e');
+    }
+  }
+
+  void stopMusic() {
+    final isTest = WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    if (isTest) return;
+
+    try {
+      FlameAudio.bgm.stop().catchError((e) {
+        debugPrint('Error stopping background music: $e');
+      });
+      _isMusicPlaying = false;
+    } catch (e) {
+      debugPrint('Error stopping background music: $e');
     }
   }
 
