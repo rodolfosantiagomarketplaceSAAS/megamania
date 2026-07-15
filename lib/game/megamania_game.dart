@@ -352,6 +352,7 @@ class MegamaniaGame extends FlameGame
   // Asynchronous non-blocking audio pool initialization
   Future<void> _initAudioPools() async {
     try {
+      await FlameAudio.bgm.initialize();
       laserPool = await FlameAudio.createPool('laser.wav', minPlayers: 2, maxPlayers: 6);
       explosionPool = await FlameAudio.createPool('explosion.wav', minPlayers: 2, maxPlayers: 6);
       hitPool = await FlameAudio.createPool('player_hit.wav', minPlayers: 1, maxPlayers: 2);
