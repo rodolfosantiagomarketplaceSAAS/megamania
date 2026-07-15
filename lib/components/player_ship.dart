@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../game/megamania_game.dart';
 import 'enemy_component.dart';
 import 'laser.dart';
+import 'meteor.dart';
 
 enum ShipState {
   idle,
@@ -118,8 +119,8 @@ class PlayerShip extends PositionComponent
     super.onCollisionStart(intersectionPoints, other);
     if (!active) return;
 
-    // Handle collision with enemies or enemy lasers
-    if (other is EnemyComponent || (other is Laser && !other.isPlayerLaser)) {
+    // Handle collision with enemies, enemy lasers, or meteors
+    if (other is EnemyComponent || (other is Laser && !other.isPlayerLaser) || other is Meteor) {
       gameRef.loseLife();
       if (other is Laser) {
         other.removeFromParent();

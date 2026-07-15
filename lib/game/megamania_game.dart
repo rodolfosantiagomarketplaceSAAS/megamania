@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import '../components/player_ship.dart';
 import '../components/visual_effects.dart';
+import '../components/meteor.dart';
 import '../services/supabase_service.dart';
 import 'gamepad_helper.dart';
 import 'input_controller.dart';
@@ -31,6 +33,14 @@ class MegamaniaGame extends FlameGame
   int lives = 3;
   int wave = 1;
   double dreamEnergy = 100.0;
+
+  // Camera Shake state
+  double _shakeTimer = 0.0;
+  double _shakeIntensity = 0.0;
+
+  // Meteor Spawner state
+  double _meteorTimer = 0.0;
+  double _nextMeteorDelay = 12.0; // seconds before first meteor alert
 
   // Selected ship type
   final ValueNotifier<ShipType> selectedShipType = ValueNotifier<ShipType>(ShipType.dreamCruiser);
@@ -92,6 +102,10 @@ class MegamaniaGame extends FlameGame
     wave = 1;
     dreamEnergy = maxDreamEnergy;
     state = GameState.playing;
+    _shakeTimer = 0.0;
+    _shakeIntensity = 0.0;
+    _meteorTimer = 0.0;
+    _nextMeteorDelay = 12.0;
     
     // Reset components
     debugPrint('--- Resetting player ship ---');
@@ -168,6 +182,15 @@ class MegamaniaGame extends FlameGame
   void update(double dt) {
     super.update(dt);
     
+    // Decrement shake timer if active
+    if (_shakeTimer > 0.0) {
+      _shakeTimer -= dt;
+      if (_shakeTimer <= 0.0) {
+        _shakeTimer = 0.0;
+        _shakeIntensity = 0.0;
+      }
+    }
+
     if (state == GameState.playing) {
       // Poll connected gamepads/joysticks
       GamepadHelper.pollGamepads(this);
@@ -182,6 +205,36 @@ class MegamaniaGame extends FlameGame
         dreamEnergy = 0.0;
         loseLife();
       }
+
+      // Update meteor spawn timer
+      _meteorTimer += dt;
+      if (_meteorTimer >= _nextMeteorDelay) {
+        _meteorTimer = 0.0;
+        _nextMeteorDelay = 12.0 + Random().nextDouble() * 8.0;
+
+        final double margin = 60.0;
+        final double randomX = margin + Random().nextDouble() * (canvasSize.x - margin * 2);
+        add(MeteorAlert(targetX: randomX));
+      }
+    }
+  }
+
+  void shakeCamera({double duration = 0.20, double intensity = 4.5}) {
+    _shakeTimer = duration;
+    _shakeIntensity = intensity;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (_shakeTimer > 0.0) {
+      canvas.save();
+      final double dx = (Random().nextDouble() - 0.5) * 2.0 * _shakeIntensity;
+      final double dy = (Random().nextDouble() - 0.5) * 2.0 * _shakeIntensity;
+      canvas.translate(dx, dy);
+      super.render(canvas);
+      canvas.restore();
+    } else {
+      super.render(canvas);
     }
   }
 

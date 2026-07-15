@@ -8,6 +8,7 @@ import '../components/enemies/die_enemy.dart';
 import '../components/enemies/iron_enemy.dart';
 import '../components/enemies/bowtie_enemy.dart';
 import '../components/enemies/block_enemy.dart';
+import '../components/meteor.dart';
 import 'megamania_game.dart';
 
 class WaveManager extends Component with HasGameRef<MegamaniaGame> {
@@ -30,11 +31,11 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     _spawnAllEnemies();
   }
 
-  /// Wipe all active enemies from the viewport
+  /// Wipe all active enemies, meteors, alerts, and particles from the viewport
   void clearActiveEnemies() {
     final List<Component> toRemove = [];
     for (final child in gameRef.children) {
-      if (child is EnemyComponent) {
+      if (child is EnemyComponent || child is Meteor || child is MeteorAlert || child is TrailParticle) {
         toRemove.add(child);
       }
     }
