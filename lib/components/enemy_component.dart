@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import '../game/megamania_game.dart';
 import 'laser.dart';
@@ -60,11 +59,6 @@ abstract class EnemyComponent extends PositionComponent
 
     if (gameRef.state == GameState.playing) {
       tryShoot(dt);
-    }
-
-    // Wrap around to top when exiting bottom
-    if (position.y > gameRef.canvasSize.y + size.y) {
-      position.y = 60.0;
     }
   }
 
