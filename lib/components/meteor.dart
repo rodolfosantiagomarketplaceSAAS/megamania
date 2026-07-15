@@ -107,9 +107,12 @@ class Meteor extends PositionComponent with HasGameRef<MegamaniaGame>, Collision
     required this.speedY,
   }) : super(position: position, size: Vector2(40.0, 40.0), anchor: Anchor.center);
 
+  Sprite? _sprite;
+
   @override
   Future<void> onLoad() async {
     super.onLoad();
+    _sprite = await gameRef.loadSprite('meteor.png');
     // Hitbox for collision detection
     add(CircleHitbox(radius: size.x * 0.4, position: size * 0.1));
   }
@@ -162,56 +165,25 @@ class Meteor extends PositionComponent with HasGameRef<MegamaniaGame>, Collision
 
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-    canvas.save();
+    if (_sprite != null) {
+      canvas.save();
+      // Aura glow effect
+      final Paint glowPaint = Paint()
+        ..color = const Color(0xFFFF5722).withOpacity(0.3);
+      try {
+        glowPaint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 6.0);
+      } catch (_) {}
+      canvas.drawCircle(Offset(size.x * 0.5, size.y * 0.5), size.x * 0.55, glowPaint);
 
-    final double w = size.x;
-    final double h = size.y;
-    final Rect rect = Rect.fromLTWH(0, 0, w, h);
+      // Rotate the meteor as it falls
+      canvas.translate(size.x / 2, size.y / 2);
+      canvas.rotate(_accumulatedTime * 2.2);
+      canvas.translate(-size.x / 2, -size.y / 2);
 
-    // 1. Aura glow effect
-    final Paint glowPaint = Paint()
-      ..color = const Color(0xFFFF5722).withOpacity(0.35);
-    try {
-      glowPaint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 7.0);
-    } catch (_) {}
-    canvas.drawCircle(Offset(w * 0.5, h * 0.5), w * 0.55, glowPaint);
-
-    // 2. Base rock gradient (jagged meteor texture)
-    final Paint rockPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF3E2723), Color(0xFF212121)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(rect);
-
-    final Path path = Path()
-      ..moveTo(w * 0.3, h * 0.1)
-      ..lineTo(w * 0.7, h * 0.05)
-      ..lineTo(w * 0.95, h * 0.3)
-      ..lineTo(w * 0.9, h * 0.75)
-      ..lineTo(w * 0.6, h * 0.95)
-      ..lineTo(w * 0.2, h * 0.8)
-      ..lineTo(w * 0.05, h * 0.45)
-      ..close();
-    canvas.drawPath(path, rockPaint);
-
-    // 3. Glowing neon edge highlight (Atari modern feel)
-    final Paint borderPaint = Paint()
-      ..color = const Color(0xFFFFB300)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawPath(path, borderPaint);
-
-    // 4. Glowing core crack details
-    final Paint crackPaint = Paint()
-      ..color = const Color(0xFFFF3D00)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(w * 0.3, h * 0.35), Offset(w * 0.55, h * 0.5), crackPaint);
-    canvas.drawLine(Offset(w * 0.55, h * 0.5), Offset(w * 0.5, h * 0.75), crackPaint);
-    canvas.drawLine(Offset(w * 0.55, h * 0.5), Offset(w * 0.75, h * 0.45), crackPaint);
-
-    canvas.restore();
+      _sprite!.render(canvas, position: Vector2.zero(), size: size);
+      canvas.restore();
+    } else {
+      super.render(canvas);
+    }
   }
 }

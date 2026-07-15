@@ -52,56 +52,20 @@ class BugEnemy extends EnemyComponent {
     }
   }
 
+  Sprite? _sprite;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _sprite = await gameRef.loadSprite('bug.png');
+  }
+
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-
-    canvas.save();
-
-    final double w = size.x;
-    final double h = size.y;
-
-    // 1. Antennae (Sinusoidal wiggle animation)
-    final Paint linePaint = Paint()
-      ..color = const Color(0xFF81C784)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final double wiggle = sin(accumulatedTime * 15.0) * 4.0;
-    canvas.drawLine(Offset(w * 0.35, h * 0.2), Offset(w * 0.2 + wiggle, 0), linePaint);
-    canvas.drawLine(Offset(w * 0.65, h * 0.2), Offset(w * 0.8 - wiggle, 0), linePaint);
-
-    // 2. Insect legs (Static angled lines extending outwards)
-    canvas.drawLine(Offset(w * 0.1, h * 0.4), Offset(-2.0, h * 0.3), linePaint);
-    canvas.drawLine(Offset(w * 0.1, h * 0.6), Offset(-4.0, h * 0.6), linePaint);
-    canvas.drawLine(Offset(w * 0.1, h * 0.8), Offset(-2.0, h * 0.9), linePaint);
-
-    canvas.drawLine(Offset(w * 0.9, h * 0.4), Offset(w + 2.0, h * 0.3), linePaint);
-    canvas.drawLine(Offset(w * 0.9, h * 0.6), Offset(w + 4.0, h * 0.6), linePaint);
-    canvas.drawLine(Offset(w * 0.9, h * 0.8), Offset(w + 2.0, h * 0.9), linePaint);
-
-    // 3. Main Outer Body shell (Glowing Green/Teal)
-    final Paint bodyPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF66BB6A), Color(0xFF00796B)],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-
-    canvas.drawOval(Rect.fromLTWH(w * 0.15, h * 0.15, w * 0.7, h * 0.75), bodyPaint);
-
-    // 4. Glowing Red Eyes
-    final Paint eyePaint = Paint()..color = const Color(0xFFFF1744);
-    canvas.drawCircle(Offset(w * 0.38, h * 0.4), 2.5, eyePaint);
-    canvas.drawCircle(Offset(w * 0.62, h * 0.4), 2.5, eyePaint);
-
-    // 5. Wing Covers (Elytra lines)
-    final Paint elytraPaint = Paint()
-      ..color = const Color(0xFF004D40)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(w * 0.5, h * 0.25), Offset(w * 0.5, h * 0.9), elytraPaint);
-
-    canvas.restore();
+    if (_sprite != null) {
+      _sprite!.render(canvas, position: Vector2.zero(), size: size);
+    } else {
+      super.render(canvas);
+    }
   }
 }

@@ -45,60 +45,20 @@ class BowtieEnemy extends EnemyComponent {
     position.x = _xOriginal + sin(accumulatedTime * frequency) * amplitude;
   }
 
+  Sprite? _sprite;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _sprite = await gameRef.loadSprite('bowtie.png');
+  }
+
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-
-    canvas.save();
-
-    final double w = size.x;
-    final double h = size.y;
-
-    // 1. Draw Left Wing (Triangle)
-    final Paint wingPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFFF7043), Color(0xFFD84315)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ).createShader(Rect.fromLTWH(0, 0, w * 0.45, h));
-
-    final Path leftWing = Path()
-      ..moveTo(0, 0)
-      ..lineTo(w * 0.45, h * 0.5)
-      ..lineTo(0, h)
-      ..close();
-    canvas.drawPath(leftWing, wingPaint);
-
-    // 2. Draw Right Wing (Triangle)
-    final Paint rightWingPaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFD84315), Color(0xFFFF7043)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ).createShader(Rect.fromLTWH(w * 0.55, 0, w * 0.45, h));
-
-    final Path rightWing = Path()
-      ..moveTo(w, 0)
-      ..lineTo(w * 0.55, h * 0.5)
-      ..lineTo(w, h)
-      ..close();
-    canvas.drawPath(rightWing, rightWingPaint);
-
-    // 3. Draw Center Knot (Rounded Square)
-    final Paint knotPaint = Paint()..color = const Color(0xFFFFCC80);
-    final Paint knotBorder = Paint()
-      ..color = const Color(0xFFFFB300)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final Rect knotRect = Rect.fromLTWH(w * 0.41, h * 0.25, w * 0.18, h * 0.5);
-    canvas.drawRRect(RRect.fromRectAndRadius(knotRect, const Radius.circular(3.0)), knotPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(knotRect, const Radius.circular(3.0)), knotBorder);
-
-    // 4. Knot Center Jewel / Glow dot
-    final Paint jewelPaint = Paint()..color = const Color(0xFFFF2A2A);
-    canvas.drawCircle(Offset(w * 0.5, h * 0.5), 2.0, jewelPaint);
-
-    canvas.restore();
+    if (_sprite != null) {
+      _sprite!.render(canvas, position: Vector2.zero(), size: size);
+    } else {
+      super.render(canvas);
+    }
   }
 }

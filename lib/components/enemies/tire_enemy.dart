@@ -53,68 +53,25 @@ class TireEnemy extends EnemyComponent {
     }
   }
 
+  Sprite? _sprite;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _sprite = await gameRef.loadSprite('tire.png');
+  }
+
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-
-    canvas.save();
-
-    final double radius = size.x / 2;
-    canvas.translate(radius, radius);
-    
-    // Continuous rotation to simulate rolling
-    final double rotationAngle = accumulatedTime * 6.0 * direction;
-    canvas.rotate(rotationAngle);
-
-    // 1. Draw Outer Tire Rim (Dark slate/neon blue theme)
-    final Paint tirePaint = Paint()
-      ..shader = RadialGradient(
-        colors: [const Color(0xFF37474F), Colors.black],
-        radius: 1.0,
-      ).createShader(Rect.fromCircle(center: Offset.zero, radius: radius));
-
-    canvas.drawCircle(Offset.zero, radius, tirePaint);
-
-    // 2. Draw Wheel Treads (spoke dashes on outer rim)
-    final Paint treadPaint = Paint()
-      ..color = const Color(0xFF00E5FF)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    for (int i = 0; i < 8; i++) {
-      final double angle = i * pi / 4;
-      final double startX = (radius - 4) * cos(angle);
-      final double startY = (radius - 4) * sin(angle);
-      final double endX = radius * cos(angle);
-      final double endY = radius * sin(angle);
-      canvas.drawLine(Offset(startX, startY), Offset(endX, endY), treadPaint);
+    if (_sprite != null) {
+      canvas.save();
+      canvas.translate(size.x / 2, size.y / 2);
+      canvas.rotate(accumulatedTime * 6.0 * direction);
+      canvas.translate(-size.x / 2, -size.y / 2);
+      _sprite!.render(canvas, position: Vector2.zero(), size: size);
+      canvas.restore();
+    } else {
+      super.render(canvas);
     }
-
-    // 3. Draw Inner Glowing Alloy Ring
-    final Paint alloyPaint = Paint()
-      ..color = const Color(0xFF00E5FF)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(Offset.zero, radius - 6.0, alloyPaint);
-
-    // 4. Draw Center Cap / Spokes
-    final Paint spokePaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 1.5;
-    
-    for (int i = 0; i < 4; i++) {
-      final double angle = i * pi / 2;
-      canvas.drawLine(
-        Offset.zero,
-        Offset((radius - 8.0) * cos(angle), (radius - 8.0) * sin(angle)),
-        spokePaint,
-      );
-    }
-
-    // Hub cap
-    final Paint hubPaint = Paint()..color = const Color(0xFFFF007F);
-    canvas.drawCircle(Offset.zero, 3.5, hubPaint);
-
-    canvas.restore();
   }
 }

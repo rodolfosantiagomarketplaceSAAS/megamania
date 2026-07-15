@@ -52,53 +52,20 @@ class BlockEnemy extends EnemyComponent {
     }
   }
 
+  Sprite? _sprite;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    _sprite = await gameRef.loadSprite('block.png');
+  }
+
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-
-    canvas.save();
-
-    final double w = size.x;
-    final double h = size.y;
-    final Rect blockRect = Rect.fromLTWH(0, 0, w, h);
-
-    // 1. Draw 3D Isometric Neon Cube
-    // Background plate (Back/Bottom shadow face)
-    final Paint shadowPaint = Paint()..color = const Color(0xFF001122);
-    canvas.drawRect(blockRect, shadowPaint);
-
-    // Main Face (Neon blue/pink gradient)
-    final Paint facePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF00E5FF), Color(0xFFFF007F)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(blockRect);
-    
-    canvas.drawRect(Rect.fromLTWH(2, 2, w - 4, h - 4), facePaint);
-
-    // Inner 3D lines (Isometric illusion)
-    final Paint linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // Outer wireframe border
-    canvas.drawRect(Rect.fromLTWH(2, 2, w - 4, h - 4), linePaint);
-
-    // Isometric lines
-    canvas.drawLine(Offset(2, 2), Offset(w * 0.35, h * 0.35), linePaint);
-    canvas.drawLine(Offset(w - 2, 2), Offset(w * 0.65, h * 0.35), linePaint);
-    canvas.drawLine(Offset(2, h - 2), Offset(w * 0.35, h * 0.65), linePaint);
-    canvas.drawLine(Offset(w - 2, h - 2), Offset(w * 0.65, h * 0.65), linePaint);
-    
-    // Inner square
-    canvas.drawRect(Rect.fromLTRB(w * 0.35, h * 0.35, w * 0.65, h * 0.65), linePaint);
-
-    // Center glowing core
-    final Paint corePaint = Paint()..color = Colors.white;
-    canvas.drawCircle(Offset(w * 0.5, h * 0.5), 3.0, corePaint);
-
-    canvas.restore();
+    if (_sprite != null) {
+      _sprite!.render(canvas, position: Vector2.zero(), size: size);
+    } else {
+      super.render(canvas);
+    }
   }
 }
