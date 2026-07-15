@@ -62,9 +62,9 @@ abstract class EnemyComponent extends PositionComponent
       tryShoot(dt);
     }
 
-    // Automated garbage collection: remove if it exits screen from the bottom
+    // Wrap around to top when exiting bottom
     if (position.y > gameRef.canvasSize.y + size.y) {
-      removeFromParent();
+      position.y = 60.0;
     }
   }
 

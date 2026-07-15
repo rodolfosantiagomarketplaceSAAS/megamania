@@ -160,7 +160,7 @@ class MegamaniaGame extends FlameGame
       _saveScoreToBackend();
     } else {
       playerShip.resetPosition();
-      waveManager.clearActiveEnemies();
+      waveManager.resetWave();
     }
   }
 

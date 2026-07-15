@@ -22,6 +22,9 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   double _transitionTimer = 0.0;
   static const double transitionDelay = 2.2; // Seconds between levels
 
+  // Flag to wait for Flame tree integration before verifying active enemies
+  bool _waveJustSpawned = false;
+
   // Shared direction for block-movement enemies (Hamburger, Tire, Iron)
   double enemyDirection = 1.0;
 
@@ -31,6 +34,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     _inTransition = false;
     _transitionTimer = 0.0;
     enemyDirection = 1.0;
+    _waveJustSpawned = true;
     
     _spawnAllEnemies();
   }
@@ -62,6 +66,15 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         resetWave();
       }
       return;
+    }
+
+    if (_waveJustSpawned) {
+      final hasEnemies = gameRef.children.any((c) => c is EnemyComponent);
+      if (hasEnemies) {
+        _waveJustSpawned = false;
+      } else {
+        return;
+      }
     }
 
     // Check if all spawned enemies are cleared to advance waves
