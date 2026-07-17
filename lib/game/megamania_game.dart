@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import '../components/player_ship.dart';
@@ -22,6 +23,11 @@ enum GameState {
 enum ShipType {
   dreamCruiser, // GC-001
   starhawk,     // GC-7
+}
+
+enum MobileControlStyle {
+  buttons,
+  drag,
 }
 
 class MegamaniaGame extends FlameGame 
@@ -61,7 +67,15 @@ class MegamaniaGame extends FlameGame
   
   // Controllers
   final KeyboardInputController keyboardInputController = KeyboardInputController();
-  final DragInputController dragInputController = DragInputController();
+  final MobileInputController mobileInputController = MobileInputController();
+
+  // Mobile Control configurations
+  final ValueNotifier<bool> showTouchControls = ValueNotifier<bool>(
+    defaultTargetPlatform == TargetPlatform.android ||
+    defaultTargetPlatform == TargetPlatform.iOS
+  );
+  final ValueNotifier<MobileControlStyle> mobileControlStyle =
+      ValueNotifier<MobileControlStyle>(MobileControlStyle.buttons);
 
   // Components
   final PlayerShip playerShip = PlayerShip();
@@ -202,7 +216,7 @@ class MegamaniaGame extends FlameGame
 
       // Update inputs
       keyboardInputController.update(dt);
-      dragInputController.update(dt);
+      mobileInputController.update(dt);
 
       // Decrease Dream Energy over time
       dreamEnergy -= energyConsumptionRate * dt;
@@ -304,20 +318,27 @@ class MegamaniaGame extends FlameGame
   // Intercept Touch/Drag Input on Mobile
   @override
   void onDragUpdate(DragUpdateEvent event) {
+    super.onDragUpdate(event);
     if (state == GameState.playing) {
-      final screenHeight = canvasSize.y;
-      final touchY = event.canvasEndPosition.y;
-      
-      // Capacitive input is active only on the bottom half of the screen
-      if (touchY > screenHeight * 0.5) {
-        dragInputController.handleDragUpdate(event.localDelta.x, canvasSize.x);
+      // Only process drag movement if drag mode is active and touch controls are enabled
+      if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+        final screenHeight = canvasSize.y;
+        final touchY = event.canvasEndPosition.y;
+        
+        // Capacitive input is active only on the bottom half of the screen
+        if (touchY > screenHeight * 0.5) {
+          mobileInputController.handleDragUpdate(event.localDelta.x, canvasSize.x);
+        }
       }
     }
   }
 
   @override
   void onDragEnd(DragEndEvent event) {
-    dragInputController.handleDragEnd();
+    super.onDragEnd(event);
+    if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+      mobileInputController.handleDragEnd();
+    }
   }
 
   double _lastMouseX = -1.0;

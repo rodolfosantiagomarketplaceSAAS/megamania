@@ -14,8 +14,7 @@ import 'megamania_game.dart';
 class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   bool active = false;
   
-  int _enemiesToSpawn = 0;
-  int _enemiesSpawned = 0;
+  double _descendCooldownTimer = 0.0;
 
   // Level transition status
   bool _inTransition = false;
@@ -33,8 +32,13 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     clearActiveEnemies();
     _inTransition = false;
     _transitionTimer = 0.0;
-    enemyDirection = 1.0;
+    
+    final int phaseType = (gameRef.wave - 1) % 8;
+    // Phase 1 (Hamburger) starts moving from right to left (direction -1.0)
+    enemyDirection = (phaseType == 0) ? -1.0 : 1.0;
+    
     _waveJustSpawned = true;
+    _descendCooldownTimer = 0.4; // Allow immediate descend if wall is hit
     
     _spawnAllEnemies();
   }
@@ -57,6 +61,9 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     super.update(dt);
 
     if (!active || gameRef.state != GameState.playing) return;
+
+    // Track cooldown between block descends
+    _descendCooldownTimer += dt;
 
     if (_inTransition) {
       _transitionTimer += dt;
@@ -104,22 +111,25 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       bool shouldDescend = false;
       double newDirection = enemyDirection;
 
-      for (final enemy in enemies) {
-        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-          final double halfWidth = enemy.size.x / 2;
-          if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
-            shouldDescend = true;
-            newDirection = -1.0;
-            break;
-          } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
-            shouldDescend = true;
-            newDirection = 1.0;
-            break;
+      if (_descendCooldownTimer >= 0.4) {
+        for (final enemy in enemies) {
+          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+            final double halfWidth = enemy.size.x / 2;
+            if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
+              shouldDescend = true;
+              newDirection = -1.0;
+              break;
+            } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
+              shouldDescend = true;
+              newDirection = 1.0;
+              break;
+            }
           }
         }
       }
 
       if (shouldDescend) {
+        _descendCooldownTimer = 0.0; // reset cooldown
         enemyDirection = newDirection;
         for (final enemy in enemies) {
           if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
@@ -142,8 +152,10 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       final double wrapThreshold = gameRef.canvasSize.y - 120.0;
       if (maxEnemyY > wrapThreshold) {
         final double dy = maxEnemyY - 60.0;
-        for (final enemy in enemies) {
-          enemy.position.y -= dy;
+        if (dy > 0.0) {
+          for (final enemy in enemies) {
+            enemy.position.y -= dy;
+          }
         }
       }
     }
@@ -155,22 +167,40 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     // Speed increases by 25% per full cycle (after phase 8)
     final double difficultyMultiplier = 1.0 + (cycle * 0.25);
 
-    const int count = 12;
-    _enemiesToSpawn = count;
-    _enemiesSpawned = count;
-
     final double screenWidth = gameRef.canvasSize.x;
     final double margin = 40.0;
     final double availableWidth = screenWidth - (margin * 2);
-    final double spacing = availableWidth / (count - 1);
 
-    for (int i = 0; i < count; i++) {
-      final double xPos = margin + i * spacing;
-      // Start near the top
-      final double yPos = 60.0;
+    if (phaseType == 0) {
+      // Phase 1: 3 rows of 5 enemies each = 15 total, starting left
+      const int rows = 3;
+      const int cols = 5;
+      final double spacingX = availableWidth / (cols - 1);
+      const double spacingY = 45.0; // Vertical spacing between rows
 
-      final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, i);
-      gameRef.add(enemy);
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+          final double xPos = margin + c * spacingX;
+          final double yPos = 60.0 + r * spacingY;
+          final int index = r * cols + c;
+
+          final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, index);
+          gameRef.add(enemy);
+        }
+      }
+    } else {
+      // Other phases: 1 row of 12 enemies
+      const int count = 12;
+      final double spacing = availableWidth / (count - 1);
+
+      for (int i = 0; i < count; i++) {
+        final double xPos = margin + i * spacing;
+        // Start near the top
+        final double yPos = 60.0;
+
+        final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, i);
+        gameRef.add(enemy);
+      }
     }
   }
 

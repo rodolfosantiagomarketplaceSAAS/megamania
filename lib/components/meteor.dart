@@ -3,7 +3,6 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../game/megamania_game.dart';
-import 'player_ship.dart';
 import 'laser.dart';
 
 class TrailParticle extends PositionComponent with HasGameRef<MegamaniaGame> {

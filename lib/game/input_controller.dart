@@ -74,15 +74,22 @@ class KeyboardInputController extends InputController {
   void update(double dt) {}
 }
 
-/// Mobile implementation utilizing relative drag calculations (no fixed joystick).
-class DragInputController extends InputController {
-  double _movementInput = 0.0;
+/// Mobile implementation utilizing relative drag or virtual D-pad buttons.
+class MobileInputController extends InputController {
+  double _dragMovementInput = 0.0;
+  double _buttonMovementInput = 0.0;
   
   // Drag decay rate to slowly stop the ship if drag events cease
   static const double _decayRate = 8.0;
 
   @override
-  double get movementInput => _movementInput;
+  double get movementInput {
+    // Button input takes precedence if non-zero, otherwise fallback to drag
+    if (_buttonMovementInput != 0.0) {
+      return _buttonMovementInput;
+    }
+    return _dragMovementInput;
+  }
 
   @override
   bool isFiring = false; // Set from the UI fire button
@@ -95,28 +102,32 @@ class DragInputController extends InputController {
     // Scale factor to make drag responsive
     const double sensitivity = 8.0;
     
-    _movementInput = (deltaX / screenWidth) * sensitivity;
+    _dragMovementInput = (deltaX / screenWidth) * sensitivity;
     
     // Clamp output within [-1.0, 1.0] bounds
-    if (_movementInput > 1.0) _movementInput = 1.0;
-    if (_movementInput < -1.0) _movementInput = -1.0;
+    _dragMovementInput = _dragMovementInput.clamp(-1.0, 1.0);
   }
 
   /// Reset the horizontal velocity coefficient when drag ends.
   void handleDragEnd() {
-    _movementInput = 0.0;
+    _dragMovementInput = 0.0;
+  }
+
+  /// Directly set horizontal movement input via virtual buttons (e.g. -1.0 for left, 1.0 for right, 0.0 for none)
+  void setButtonInput(double value) {
+    _buttonMovementInput = value.clamp(-1.0, 1.0);
   }
 
   @override
   void update(double dt) {
-    // If there is no active input, decay the input to 0 quickly for responsiveness
-    if (_movementInput != 0.0) {
-      if (_movementInput > 0) {
-        _movementInput -= _decayRate * dt;
-        if (_movementInput < 0) _movementInput = 0;
+    // If there is active drag input, decay it to 0 quickly if no active updates
+    if (_dragMovementInput != 0.0) {
+      if (_dragMovementInput > 0) {
+        _dragMovementInput -= _decayRate * dt;
+        if (_dragMovementInput < 0) _dragMovementInput = 0.0;
       } else {
-        _movementInput += _decayRate * dt;
-        if (_movementInput > 0) _movementInput = 0;
+        _dragMovementInput += _decayRate * dt;
+        if (_dragMovementInput > 0) _dragMovementInput = 0.0;
       }
     }
   }

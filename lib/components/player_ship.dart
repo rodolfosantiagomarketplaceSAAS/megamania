@@ -1,7 +1,5 @@
-import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/material.dart';
 import '../game/megamania_game.dart';
 import 'enemy_component.dart';
@@ -57,10 +55,10 @@ class PlayerShip extends PositionComponent
     
     if (!active || gameRef.state != GameState.playing) return;
 
-    // Query active horizontal input (keyboard prioritised, fallback to drag)
+    // Query active horizontal input (keyboard prioritised, fallback to mobile touch/drag)
     _currentMoveInput = gameRef.keyboardInputController.movementInput;
     if (_currentMoveInput == 0.0) {
-      _currentMoveInput = gameRef.dragInputController.movementInput;
+      _currentMoveInput = gameRef.mobileInputController.movementInput;
     }
 
     // Determine visual banking states based on movement direction
@@ -84,9 +82,9 @@ class PlayerShip extends PositionComponent
       position.x = gameRef.canvasSize.x - halfWidth;
     }
 
-    // Query active firing input (keyboard spacebar or drag controller UI button)
+    // Query active firing input (keyboard spacebar or mobile controller UI button)
     final bool isFiring = gameRef.keyboardInputController.isFiring ||
-        gameRef.dragInputController.isFiring;
+        gameRef.mobileInputController.isFiring;
 
     // Handle weapon systems fire cooldowns
     final bool hasActiveLaser = gameRef.children.whereType<Laser>().any((l) => l.isPlayerLaser);

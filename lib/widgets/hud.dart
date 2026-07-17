@@ -15,6 +15,8 @@ class HUD extends StatefulWidget {
 class _HUDState extends State<HUD> with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   bool _isFireButtonPressed = false;
+  bool _isLeftPressed = false;
+  bool _isRightPressed = false;
 
   @override
   void initState() {
@@ -289,8 +291,116 @@ class _HUDState extends State<HUD> with SingleTickerProviderStateMixin {
             ),
           ),
 
-          // VIRTUAL FIRE BUTTON (Only active during live gameplay)
-          if (game.state == GameState.playing)
+          // VIRTUAL D-PAD (Left/Right Buttons) - Only active during live gameplay if touch controls are enabled and style is buttons
+          if (game.state == GameState.playing && 
+              game.showTouchControls.value && 
+              game.mobileControlStyle.value == MobileControlStyle.buttons)
+            Positioned(
+              bottom: 40,
+              left: 32,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A).withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(36),
+                  border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.8), width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF00E5FF).withOpacity(0.25),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Left Button
+                    GestureDetector(
+                      onTapDown: (_) {
+                        setState(() {
+                          _isLeftPressed = true;
+                        });
+                        game.mobileInputController.setButtonInput(-1.0);
+                      },
+                      onTapUp: (_) {
+                        setState(() {
+                          _isLeftPressed = false;
+                        });
+                        game.mobileInputController.setButtonInput(0.0);
+                      },
+                      onTapCancel: () {
+                        setState(() {
+                          _isLeftPressed = false;
+                        });
+                        game.mobileInputController.setButtonInput(0.0);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 50),
+                        width: 66,
+                        height: 66,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isLeftPressed
+                              ? const Color(0xFF00E5FF).withOpacity(0.3)
+                              : Colors.transparent,
+                        ),
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: _isLeftPressed ? const Color(0xFF00FFCC) : const Color(0xFF00E5FF),
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 2,
+                      height: 44,
+                      color: const Color(0xFF00E5FF).withOpacity(0.3),
+                    ),
+                    // Right Button
+                    GestureDetector(
+                      onTapDown: (_) {
+                        setState(() {
+                          _isRightPressed = true;
+                        });
+                        game.mobileInputController.setButtonInput(1.0);
+                      },
+                      onTapUp: (_) {
+                        setState(() {
+                          _isRightPressed = false;
+                        });
+                        game.mobileInputController.setButtonInput(0.0);
+                      },
+                      onTapCancel: () {
+                        setState(() {
+                          _isRightPressed = false;
+                        });
+                        game.mobileInputController.setButtonInput(0.0);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 50),
+                        width: 66,
+                        height: 66,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _isRightPressed
+                              ? const Color(0xFF00E5FF).withOpacity(0.3)
+                              : Colors.transparent,
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: _isRightPressed ? const Color(0xFF00FFCC) : const Color(0xFF00E5FF),
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // VIRTUAL FIRE BUTTON (Only active during live gameplay if touch controls are enabled)
+          if (game.state == GameState.playing && game.showTouchControls.value)
             Positioned(
               bottom: 40,
               right: 32,
@@ -299,19 +409,19 @@ class _HUDState extends State<HUD> with SingleTickerProviderStateMixin {
                   setState(() {
                     _isFireButtonPressed = true;
                   });
-                  game.dragInputController.isFiring = true;
+                  game.mobileInputController.isFiring = true;
                 },
                 onTapUp: (_) {
                   setState(() {
                     _isFireButtonPressed = false;
                   });
-                  game.dragInputController.isFiring = false;
+                  game.mobileInputController.isFiring = false;
                 },
                 onTapCancel: () {
                   setState(() {
                     _isFireButtonPressed = false;
                   });
-                  game.dragInputController.isFiring = false;
+                  game.mobileInputController.isFiring = false;
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 50),

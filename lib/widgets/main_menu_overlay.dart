@@ -17,11 +17,15 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
   void initState() {
     super.initState();
     widget.game.selectedShipType.addListener(_onShipChanged);
+    widget.game.showTouchControls.addListener(_onShipChanged);
+    widget.game.mobileControlStyle.addListener(_onShipChanged);
   }
 
   @override
   void dispose() {
     widget.game.selectedShipType.removeListener(_onShipChanged);
+    widget.game.showTouchControls.removeListener(_onShipChanged);
+    widget.game.mobileControlStyle.removeListener(_onShipChanged);
     super.dispose();
   }
 
@@ -133,7 +137,138 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 14),
+
+              // Configuração de Controles na Tela
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black38,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF00FFCC).withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.touch_app, color: Color(0xFF00FFCC), size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'CONTROLES NA TELA',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 11,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Switch.adaptive(
+                          value: game.showTouchControls.value,
+                          activeColor: const Color(0xFF00FFCC),
+                          onChanged: (val) {
+                            game.playClick();
+                            game.showTouchControls.value = val;
+                          },
+                        ),
+                      ],
+                    ),
+                    if (game.showTouchControls.value) ...[
+                      const Divider(color: Colors.white10, height: 16),
+                      Text(
+                        'ESTILO DE CONTROLE:',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 10,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                game.mobileControlStyle.value = MobileControlStyle.buttons;
+                                game.playClick();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: game.mobileControlStyle.value == MobileControlStyle.buttons
+                                      ? const Color(0xFF00FFCC).withOpacity(0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: game.mobileControlStyle.value == MobileControlStyle.buttons
+                                        ? const Color(0xFF00FFCC)
+                                        : Colors.white10,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'BOTÕES D-PAD',
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: game.mobileControlStyle.value == MobileControlStyle.buttons
+                                          ? const Color(0xFF00FFCC)
+                                          : Colors.white60,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                game.mobileControlStyle.value = MobileControlStyle.drag;
+                                game.playClick();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: game.mobileControlStyle.value == MobileControlStyle.drag
+                                      ? const Color(0xFFFF007F).withOpacity(0.15)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: game.mobileControlStyle.value == MobileControlStyle.drag
+                                        ? const Color(0xFFFF007F)
+                                        : Colors.white10,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'ARRASTAR TELA',
+                                    style: GoogleFonts.orbitron(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: game.mobileControlStyle.value == MobileControlStyle.drag
+                                          ? const Color(0xFFFF007F)
+                                          : Colors.white60,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Ship Selector Panel
               Text(
