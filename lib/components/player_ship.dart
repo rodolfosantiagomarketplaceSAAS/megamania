@@ -33,7 +33,7 @@ class PlayerShip extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(44.0, 66.0); // Respected the 2:3 aspect ratio of the 3D ship
+    size = Vector2(60.0, 90.0); // Respected the 2:3 aspect ratio of the 3D ship (increased size)
     anchor = Anchor.center;
     try {
       _shipSprite = await gameRef.loadSprite('player_ship.png');
