@@ -1,6 +1,8 @@
+import 'dart:math' as math;
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../game/megamania_game.dart';
 import 'enemy_component.dart';
 import 'laser.dart';
@@ -19,17 +21,11 @@ class PlayerShip extends PositionComponent
   bool active = false;
   
   double _currentMoveInput = 0.0;
+  double accumulatedTime = 0.0;
   
   // Shooting timer variables
   double _fireCooldown = 0.0;
-  static const double fireInterval = 0.12; // Auto-fires every 120 milliseconds
-
-  // Burst firing logic (allows 3 shots in sequence, then 1s cooldown)
-  int _burstShotsCount = 0;
-  double _burstCooldownTimer = 0.0;
-  double _timeSinceLastFire = 0.0;
-  static const double burstCooldownDuration = 1.0;
-  static const int maxBurstShots = 3;
+  static const double fireInterval = 1.0; // Shoot once every 1 second
 
   Sprite? _shipSprite;
 
@@ -37,7 +33,7 @@ class PlayerShip extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    size = Vector2(56.0, 56.0);
+    size = Vector2(44.0, 66.0); // Respected the 2:3 aspect ratio of the 3D ship
     anchor = Anchor.center;
     try {
       _shipSprite = await gameRef.loadSprite('player_ship.png');
@@ -54,6 +50,7 @@ class PlayerShip extends PositionComponent
   void resetPosition() {
     position = Vector2(gameRef.canvasSize.x / 2, gameRef.canvasSize.y - 70.0);
     shipState = ShipState.idle;
+    accumulatedTime = 0.0;
   }
 
   @override
@@ -61,6 +58,8 @@ class PlayerShip extends PositionComponent
     super.update(dt);
     
     if (!active || gameRef.state != GameState.playing) return;
+
+    accumulatedTime += dt;
 
     // Query active horizontal input (keyboard prioritised, fallback to mobile touch/drag)
     _currentMoveInput = gameRef.keyboardInputController.movementInput;
@@ -95,32 +94,11 @@ class PlayerShip extends PositionComponent
 
     // Handle weapon systems fire cooldowns
     _fireCooldown += dt;
-    _timeSinceLastFire += dt;
-
-    if (_burstCooldownTimer > 0.0) {
-      _burstCooldownTimer -= dt;
-      if (_burstCooldownTimer <= 0.0) {
-        _burstShotsCount = 0;
-      }
-    }
-
-    // Quality of life: Reset burst count if the player hasn't shot in 0.4 seconds
-    if (_timeSinceLastFire >= 0.4 && _burstCooldownTimer <= 0.0) {
-      _burstShotsCount = 0;
-    }
 
     if (isFiring) {
-      if (_burstCooldownTimer <= 0.0 && _burstShotsCount < maxBurstShots) {
-        if (_fireCooldown >= fireInterval) {
-          _fireCooldown = 0.0;
-          _timeSinceLastFire = 0.0;
-          _fireLasers();
-          _burstShotsCount++;
-
-          if (_burstShotsCount >= maxBurstShots) {
-            _burstCooldownTimer = burstCooldownDuration;
-          }
-        }
+      if (_fireCooldown >= fireInterval) {
+        _fireCooldown = 0.0;
+        _fireLasers();
       }
     } else {
       // Keeps the weapon ready to fire immediately when pressed
@@ -161,26 +139,43 @@ class PlayerShip extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    super.render(canvas);
-
     if (_shipSprite != null) {
       canvas.save();
       try {
-        // Premium 3D banking/leaning effect: rotate and scale width around the ship center
+        // Translate canvas to the center of the component to rotate and scale relative to center
         canvas.translate(size.x / 2, size.y / 2);
-        if (shipState == ShipState.bankingLeft) {
-          canvas.rotate(-0.08);     // Lean left
-          canvas.scale(0.85, 1.0);  // 3D perspective roll compression
-        } else if (shipState == ShipState.bankingRight) {
-          canvas.rotate(0.08);      // Lean right
-          canvas.scale(0.85, 1.0);  // 3D perspective roll compression
-        }
-        canvas.translate(-size.x / 2, -size.y / 2);
 
+        // Smooth 3D animation:
+        // Z-axis Roll: roll based on horizontal move input
+        final double roll = _currentMoveInput * 0.12; // tilt slightly when moving
+
+        // Y-axis Yaw: tilt slightly into the movement direction + subtle idle wobble
+        final double targetYaw = -_currentMoveInput * 0.28;
+        final double yaw = targetYaw + math.sin(accumulatedTime * 3.5) * 0.05;
+
+        // X-axis Pitch: idle forward/backward wobble + acceleration pitch
+        final double pitch = math.cos(accumulatedTime * 4.5) * 0.04;
+
+        // Subtle idle breathing scale
+        final double pulse = 1.0 + math.sin(accumulatedTime * 5.0) * 0.02;
+
+        final vm64.Matrix4 matrix = vm64.Matrix4.identity()
+          ..setEntry(3, 2, 0.0015) // Apply perspective depth factor
+          ..rotateZ(roll)
+          ..rotateY(yaw)
+          ..rotateX(pitch)
+          ..scale(pulse, pulse);
+
+        canvas.transform(matrix.storage);
+
+        // Translate back and render the sprite
+        canvas.translate(-size.x / 2, -size.y / 2);
         _shipSprite!.render(canvas, position: Vector2.zero(), size: size);
       } finally {
         canvas.restore();
       }
+    } else {
+      super.render(canvas);
     }
   }
 }
