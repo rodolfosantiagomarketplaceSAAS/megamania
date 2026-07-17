@@ -15,6 +15,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   bool active = false;
   
   double _descendCooldownTimer = 0.0;
+  double _descendRemaining = 0.0; // Remaining distance for smooth vertical descent
 
   // Level transition status
   bool _inTransition = false;
@@ -39,6 +40,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     
     _waveJustSpawned = true;
     _descendCooldownTimer = 0.05; // Allow immediate descend if wall is hit (low cooldown for precision)
+    _descendRemaining = 0.0;
     
     _spawnAllEnemies();
   }
@@ -111,7 +113,20 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       bool shouldDescend = false;
       double newDirection = enemyDirection;
 
-      if (_descendCooldownTimer >= 0.05) {
+      // Animate smooth Y descent
+      if (_descendRemaining > 0.0) {
+        final double step = 150.0 * dt; // Descent speed of 150 pixels per second
+        final double actualStep = step > _descendRemaining ? _descendRemaining : step;
+        _descendRemaining -= actualStep;
+
+        for (final enemy in enemies) {
+          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+            enemy.position.y += actualStep;
+          }
+        }
+      }
+
+      if (_descendCooldownTimer >= 0.05 && _descendRemaining <= 0.0) {
         for (final enemy in enemies) {
           if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
             final double halfWidth = enemy.size.x / 2;
@@ -131,9 +146,9 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       if (shouldDescend) {
         _descendCooldownTimer = 0.0; // reset cooldown
         enemyDirection = newDirection;
+        _descendRemaining = 36.0; // Start smooth descent of 36 pixels
         for (final enemy in enemies) {
           if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-            enemy.position.y += 36.0; // descend
             if (enemy is HamburgerEnemy) enemy.direction = newDirection;
             if (enemy is TireEnemy) enemy.direction = newDirection;
             if (enemy is IronEnemy) enemy.direction = newDirection;
