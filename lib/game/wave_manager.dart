@@ -149,7 +149,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         }
       }
 
-      final double wrapThreshold = gameRef.canvasSize.y - 120.0;
+      final double wrapThreshold = gameRef.canvasSize.y;
       if (maxEnemyY > wrapThreshold) {
         final double dy = maxEnemyY - 60.0;
         if (dy > 0.0) {
