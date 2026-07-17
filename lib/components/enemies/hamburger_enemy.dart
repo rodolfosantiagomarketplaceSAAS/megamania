@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class HamburgerEnemy extends EnemyComponent {
@@ -72,7 +73,7 @@ class HamburgerEnemy extends EnemyComponent {
       // Breathing scale pulse
       final double pulse = 1.0 + math.sin(accumulatedTime * 6.0) * 0.04;
 
-      final Matrix4 matrix = Matrix4.identity()
+      final vm64.Matrix4 matrix = vm64.Matrix4.identity()
         ..setEntry(3, 2, 0.0018) // Apply perspective depth factor
         ..rotateY(yaw)
         ..rotateX(pitch)
