@@ -205,7 +205,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   }
 
   EnemyComponent _createEnemy(int type, double x, double y, double multiplier, int index) {
-    final double startDir = 1.0;
+    final double startDir = enemyDirection;
     final Vector2 startPos = Vector2(x, y);
 
     switch (type) {
