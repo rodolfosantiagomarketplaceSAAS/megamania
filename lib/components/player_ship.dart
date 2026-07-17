@@ -87,10 +87,10 @@ class PlayerShip extends PositionComponent
         gameRef.mobileInputController.isFiring;
 
     // Handle weapon systems fire cooldowns
-    final bool hasActiveLaser = gameRef.children.whereType<Laser>().any((l) => l.isPlayerLaser);
+    final int activeLasersCount = gameRef.children.whereType<Laser>().where((l) => l.isPlayerLaser).length;
     _fireCooldown += dt;
     if (isFiring) {
-      if (_fireCooldown >= fireInterval && !hasActiveLaser) {
+      if (_fireCooldown >= fireInterval && activeLasersCount < 3) {
         _fireCooldown = 0.0;
         _fireLasers();
       }
