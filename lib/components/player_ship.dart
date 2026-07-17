@@ -24,6 +24,13 @@ class PlayerShip extends PositionComponent
   double _fireCooldown = 0.0;
   static const double fireInterval = 0.12; // Auto-fires every 120 milliseconds
 
+  // Burst firing logic (allows 3 shots in sequence, then 1s cooldown)
+  int _burstShotsCount = 0;
+  double _burstCooldownTimer = 0.0;
+  double _timeSinceLastFire = 0.0;
+  static const double burstCooldownDuration = 1.0;
+  static const int maxBurstShots = 3;
+
   Sprite? _shipSprite;
 
   PlayerShip() : super(priority: 10);
@@ -87,12 +94,33 @@ class PlayerShip extends PositionComponent
         gameRef.mobileInputController.isFiring;
 
     // Handle weapon systems fire cooldowns
-    final int activeLasersCount = gameRef.children.whereType<Laser>().where((l) => l.isPlayerLaser).length;
     _fireCooldown += dt;
+    _timeSinceLastFire += dt;
+
+    if (_burstCooldownTimer > 0.0) {
+      _burstCooldownTimer -= dt;
+      if (_burstCooldownTimer <= 0.0) {
+        _burstShotsCount = 0;
+      }
+    }
+
+    // Quality of life: Reset burst count if the player hasn't shot in 0.4 seconds
+    if (_timeSinceLastFire >= 0.4 && _burstCooldownTimer <= 0.0) {
+      _burstShotsCount = 0;
+    }
+
     if (isFiring) {
-      if (_fireCooldown >= fireInterval && activeLasersCount < 3) {
-        _fireCooldown = 0.0;
-        _fireLasers();
+      if (_burstCooldownTimer <= 0.0 && _burstShotsCount < maxBurstShots) {
+        if (_fireCooldown >= fireInterval) {
+          _fireCooldown = 0.0;
+          _timeSinceLastFire = 0.0;
+          _fireLasers();
+          _burstShotsCount++;
+
+          if (_burstShotsCount >= maxBurstShots) {
+            _burstCooldownTimer = burstCooldownDuration;
+          }
+        }
       }
     } else {
       // Keeps the weapon ready to fire immediately when pressed

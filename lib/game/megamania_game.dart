@@ -81,6 +81,10 @@ class MegamaniaGame extends FlameGame
   final PlayerShip playerShip = PlayerShip();
   final WaveManager waveManager = WaveManager();
 
+  late final SpaceBackground spaceBackground;
+  Sprite? _classicBackground;
+  Sprite? _candyBackground;
+
   @override
   Future<void> onLoad() async {
     await super.onLoad();
@@ -90,10 +94,12 @@ class MegamaniaGame extends FlameGame
       _initAudioPools();
     }
 
-    // Load background image and add background component
+    // Load background images and add background component
     try {
-      final Sprite backgroundSprite = await loadSprite('background.png');
-      add(SpaceBackground(sprite: backgroundSprite));
+      _classicBackground = await loadSprite('background.png');
+      _candyBackground = await loadSprite('background_candy.jpg');
+      spaceBackground = SpaceBackground(sprite: _classicBackground!);
+      add(spaceBackground);
     } catch (e) {
       debugPrint('Error loading background image: $e');
     }
@@ -117,6 +123,7 @@ class MegamaniaGame extends FlameGame
     score = 0;
     lives = 3;
     wave = 1;
+    updateBackgroundForWave(1);
     dreamEnergy = maxDreamEnergy;
     state = GameState.playing;
     _shakeTimer = 0.0;
@@ -152,6 +159,20 @@ class MegamaniaGame extends FlameGame
     overlays.add('HUD');
     startMusic();
     debugPrint('--- startGame() finished successfully ---');
+  }
+
+  /// Dynamically updates the background image based on the active wave
+  void updateBackgroundForWave(int wave) {
+    final int phaseType = (wave - 1) % 8;
+    if (phaseType == 1) {
+      if (_candyBackground != null) {
+        spaceBackground.sprite = _candyBackground;
+      }
+    } else {
+      if (_classicBackground != null) {
+        spaceBackground.sprite = _classicBackground;
+      }
+    }
   }
 
   /// Triggered when the ship is hit or energy runs out

@@ -43,6 +43,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     _descendRemaining = 0.0;
     
     _spawnAllEnemies();
+    gameRef.updateBackgroundForWave(gameRef.wave);
   }
 
   /// Wipe all active enemies, meteors, alerts, and particles from the viewport
