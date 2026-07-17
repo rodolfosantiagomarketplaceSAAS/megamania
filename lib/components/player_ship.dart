@@ -25,7 +25,7 @@ class PlayerShip extends PositionComponent
   
   // Shooting timer variables
   double _fireCooldown = 0.0;
-  static const double fireInterval = 1.0; // Shoot once every 1 second
+  static const double fireInterval = 0.5; // Shoot once every 0.5 seconds (half of 1.0s)
 
   Sprite? _shipSprite;
 
