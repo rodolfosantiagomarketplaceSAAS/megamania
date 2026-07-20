@@ -192,21 +192,16 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     final double availableWidth = screenWidth - (margin * 2);
 
     if (phaseType == 0) {
-      // Phase 1: Staggered grid of 10 enemies (3 rows: 3-4-3)
-      const int cols = 7;
+      // Phase 1: Grid of Hamburgers (3 rows)
+      int cols = (availableWidth / 80).floor() + 1;
+      cols = cols.clamp(4, 8);
+      const int rows = 3;
       final double spacingX = availableWidth / (cols - 1);
       const double spacingY = 45.0; // Vertical spacing between rows
 
-      // Column indices for each row
-      final List<int> row0Cols = [1, 3, 5];
-      final List<int> row1Cols = [0, 2, 4, 6];
-      final List<int> row2Cols = [1, 3, 5];
-
-      final List<List<int>> layout = [row0Cols, row1Cols, row2Cols];
-
       int index = 0;
-      for (int r = 0; r < layout.length; r++) {
-        for (final int c in layout[r]) {
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
           final double xPos = margin + c * spacingX;
           final double yPos = 60.0 + r * spacingY;
 
@@ -216,17 +211,23 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         }
       }
     } else {
-      // Other phases: 1 row of 12 enemies
-      const int count = 12;
-      final double spacing = availableWidth / (count - 1);
+      // Other phases: Grid of 2 rows of enemies
+      int cols = (availableWidth / 55).floor() + 1;
+      cols = cols.clamp(6, 12);
+      const int rows = 2;
+      final double spacingX = availableWidth / (cols - 1);
+      const double spacingY = 45.0; // Vertical spacing between rows
 
-      for (int i = 0; i < count; i++) {
-        final double xPos = margin + i * spacing;
-        // Start near the top
-        final double yPos = 60.0;
+      int index = 0;
+      for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+          final double xPos = margin + c * spacingX;
+          final double yPos = 60.0 + r * spacingY;
 
-        final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, i);
-        gameRef.add(enemy);
+          final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, index);
+          gameRef.add(enemy);
+          index++;
+        }
       }
     }
   }
