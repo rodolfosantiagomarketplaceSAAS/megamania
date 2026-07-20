@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class TireEnemy extends EnemyComponent {
@@ -38,27 +39,16 @@ class TireEnemy extends EnemyComponent {
     position.x += speedX * direction * dt;
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'tire.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('tire.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      canvas.save();
-      canvas.translate(size.x / 2, size.y / 2);
-      canvas.rotate(accumulatedTime * 6.0 * direction);
-      canvas.translate(-size.x / 2, -size.y / 2);
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-      canvas.restore();
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    final double roll = accumulatedTime * 6.0 * direction;
+    final double yaw = 0.2;
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateY(yaw)
+      ..rotateZ(roll);
   }
 }

@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class IronEnemy extends EnemyComponent {
@@ -38,29 +40,24 @@ class IronEnemy extends EnemyComponent {
     position.x += speedX * direction * dt;
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'iron.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('iron.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      canvas.save();
-      // Mirror the sprite based on movement direction
-      if (direction < 0) {
-        canvas.translate(size.x, 0);
-        canvas.scale(-1, 1);
-      }
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-      canvas.restore();
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    final double stomp = sin(accumulatedTime * 5.0);
+    final double scaleY = stomp > 0 ? 1.0 - stomp * 0.15 : 1.0;
+    final double baseScaleX = stomp > 0 ? 1.0 + stomp * 0.08 : 1.0;
+    
+    // Leans forward into its movement direction
+    final double pitch = direction * 0.15;
+    
+    // Mirror the sprite based on movement direction using negative X scale
+    final double finalScaleX = direction < 0.0 ? -baseScaleX : baseScaleX;
+    
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateY(pitch)
+      ..scale(finalScaleX, scaleY);
   }
 }

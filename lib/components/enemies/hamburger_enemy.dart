@@ -44,50 +44,19 @@ class HamburgerEnemy extends EnemyComponent {
     angle = angle + (targetAngle - angle) * 6.0 * dt;
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'hamburger.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('hamburger.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      canvas.save();
-
-      // Translate canvas to the center of the component to rotate and scale relative to center
-      canvas.translate(size.x / 2, size.y / 2);
-
-      // Smooth 3D animation matrices:
-      // Y-axis rotation (Yaw): tilts slightly into the movement direction + subtle wobble
-      final double targetYaw = -direction * 0.25;
-      final double yaw = targetYaw + math.sin(accumulatedTime * 4.0) * 0.12;
-
-      // X-axis rotation (Pitch): breathing/wobbling effect
-      final double pitch = math.cos(accumulatedTime * 5.0) * 0.1;
-
-      // Breathing scale pulse
-      final double pulse = 1.0 + math.sin(accumulatedTime * 6.0) * 0.04;
-
-      final vm64.Matrix4 matrix = vm64.Matrix4.identity()
-        ..setEntry(3, 2, 0.0018) // Apply perspective depth factor
-        ..rotateY(yaw)
-        ..rotateX(pitch)
-        ..scale(pulse, pulse);
-
-      canvas.transform(matrix.storage);
-
-      // Translate back and render the sprite
-      canvas.translate(-size.x / 2, -size.y / 2);
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-
-      canvas.restore();
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    final double targetYaw = -direction * 0.25;
+    final double yaw = targetYaw + math.sin(accumulatedTime * 4.0) * 0.12;
+    final double pitch = math.cos(accumulatedTime * 5.0) * 0.1;
+    final double pulse = 1.0 + math.sin(accumulatedTime * 6.0) * 0.04;
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateY(yaw)
+      ..rotateX(pitch)
+      ..scale(pulse, pulse);
   }
 }

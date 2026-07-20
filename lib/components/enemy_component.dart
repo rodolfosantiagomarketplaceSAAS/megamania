@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../game/megamania_game.dart';
 import 'laser.dart';
 import 'visual_effects.dart';
@@ -14,6 +15,16 @@ abstract class EnemyComponent extends PositionComponent
   
   double accumulatedTime = 0.0;
   double _shootTimer = 0.0;
+
+  // Unified Sprite loading
+  Sprite? sprite;
+  String get spriteAssetPath;
+
+  // Custom 3D perspective matrix for subclasses to override
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018); // Default perspective factor
+  }
 
   // Configuration for subclass shooting capabilities
   double get shotChance => 0.0;
@@ -31,8 +42,32 @@ abstract class EnemyComponent extends PositionComponent
 
   @override
   Future<void> onLoad() async {
-    // Standard collider initialization (subclasses can override for finer hitboxes)
     add(RectangleHitbox());
+    if (spriteAssetPath.isNotEmpty) {
+      try {
+        sprite = await gameRef.loadSprite(spriteAssetPath);
+      } catch (_) {}
+    }
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (sprite != null) {
+      canvas.save();
+      // Translate to center to rotate/scale relative to center
+      canvas.translate(size.x / 2, size.y / 2);
+
+      final vm64.Matrix4 matrix = get3DMatrix(accumulatedTime);
+      canvas.transform(matrix.storage);
+
+      // Translate back and render the sprite
+      canvas.translate(-size.x / 2, -size.y / 2);
+      sprite!.render(canvas, position: Vector2.zero(), size: size);
+
+      canvas.restore();
+    } else {
+      super.render(canvas);
+    }
   }
 
   /// Triggers enemy destruction sequence, awards points, and updates energy meter.

@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class BugEnemy extends EnemyComponent {
@@ -51,22 +53,18 @@ class BugEnemy extends EnemyComponent {
     }
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'bug.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('bug.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    // Mario Wonder style squish/stretch and flap
+    final double stretchX = 1.0 + sin(accumulatedTime * 8.0) * 0.12;
+    final double stretchY = 1.0 - sin(accumulatedTime * 8.0) * 0.08;
+    final double roll = sin(accumulatedTime * 10.0) * 0.1;
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateZ(roll)
+      ..scale(stretchX, stretchY);
   }
 }

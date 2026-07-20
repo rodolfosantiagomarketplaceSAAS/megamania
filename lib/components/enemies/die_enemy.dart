@@ -1,5 +1,6 @@
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class DieEnemy extends EnemyComponent {
@@ -51,27 +52,19 @@ class DieEnemy extends EnemyComponent {
     }
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'die.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('die.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      canvas.save();
-      canvas.translate(size.x / 2, size.y / 2);
-      canvas.rotate(accumulatedTime * 1.5 * directionX);
-      canvas.translate(-size.x / 2, -size.y / 2);
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-      canvas.restore();
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    // Full 3D tumbling rotation around all axes
+    final double yaw = accumulatedTime * 1.5;
+    final double pitch = accumulatedTime * 1.2;
+    final double roll = accumulatedTime * 0.8;
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateY(yaw)
+      ..rotateX(pitch)
+      ..rotateZ(roll);
   }
 }

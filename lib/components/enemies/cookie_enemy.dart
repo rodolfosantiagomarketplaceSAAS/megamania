@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
+import 'package:vector_math/vector_math_64.dart' as vm64;
 import '../enemy_component.dart';
 
 class CookieEnemy extends EnemyComponent {
@@ -45,27 +46,19 @@ class CookieEnemy extends EnemyComponent {
     position.x = _xOriginal + sin(accumulatedTime * frequency) * amplitude;
   }
 
-  Sprite? _sprite;
+  @override
+  String get spriteAssetPath => 'cookie.png';
 
   @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-    try {
-      _sprite = await gameRef.loadSprite('cookie.png');
-    } catch (_) {}
-  }
-
-  @override
-  void render(Canvas canvas) {
-    if (_sprite != null) {
-      canvas.save();
-      canvas.translate(size.x / 2, size.y / 2);
-      canvas.rotate(accumulatedTime * 1.8);
-      canvas.translate(-size.x / 2, -size.y / 2);
-      _sprite!.render(canvas, position: Vector2.zero(), size: size);
-      canvas.restore();
-    } else {
-      super.render(canvas);
-    }
+  vm64.Matrix4 get3DMatrix(double accumulatedTime) {
+    // Cookie: gliding sinusoidal roll and swing
+    final double roll = sin(accumulatedTime * 2.0) * 0.15;
+    final double yaw = cos(accumulatedTime * frequency) * 0.3;
+    final double pulse = 1.0 + cos(accumulatedTime * 4.0) * 0.03;
+    return vm64.Matrix4.identity()
+      ..setEntry(3, 2, 0.0018)
+      ..rotateZ(roll)
+      ..rotateY(yaw)
+      ..scale(pulse, pulse);
   }
 }
