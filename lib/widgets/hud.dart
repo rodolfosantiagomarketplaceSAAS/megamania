@@ -399,8 +399,10 @@ class _HUDState extends State<HUD> with SingleTickerProviderStateMixin {
               ),
             ),
 
-          // VIRTUAL FIRE BUTTON (Only active during live gameplay if touch controls are enabled)
-          if (game.state == GameState.playing && game.showTouchControls.value)
+          // VIRTUAL FIRE BUTTON (Only active during live gameplay if touch controls are enabled and style is buttons)
+          if (game.state == GameState.playing && 
+              game.showTouchControls.value && 
+              game.mobileControlStyle.value == MobileControlStyle.buttons)
             Positioned(
               bottom: 40,
               right: 32,

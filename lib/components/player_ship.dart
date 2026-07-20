@@ -76,9 +76,13 @@ class PlayerShip extends PositionComponent
       shipState = ShipState.idle;
     }
 
-    // Apply linear horizontal translation
-    const double speed = 450.0; // pixels per second
-    position.x += _currentMoveInput * speed * dt;
+    // Apply linear horizontal translation (skipped if direct positioning like mouse or direct touch drag is active)
+    final bool isDirectPositioning = gameRef.keyboardInputController.useMouseInput ||
+        (gameRef.showTouchControls.value && gameRef.mobileControlStyle.value == MobileControlStyle.drag);
+    if (!isDirectPositioning) {
+      const double speed = 450.0; // pixels per second
+      position.x += _currentMoveInput * speed * dt;
+    }
 
     // Hard X-axis boundaries clamping (clamping ship size to screen margins)
     final double halfWidth = size.x / 2;

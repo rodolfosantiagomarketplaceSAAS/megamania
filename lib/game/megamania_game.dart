@@ -31,7 +31,7 @@ enum MobileControlStyle {
 }
 
 class MegamaniaGame extends FlameGame 
-    with HasCollisionDetection, KeyboardEvents, DragCallbacks {
+    with HasCollisionDetection, KeyboardEvents, DragCallbacks, TapCallbacks {
   
   // Game states
   GameState state = GameState.menu;
@@ -345,18 +345,72 @@ class MegamaniaGame extends FlameGame
 
   // Intercept Touch/Drag Input on Mobile
   @override
+  void onTapDown(TapDownEvent event) {
+    super.onTapDown(event);
+    if (state == GameState.playing && playerShip.active && !paused) {
+      if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+        final double minX = playerShip.size.x / 2;
+        double maxX = canvasSize.x - minX;
+        if (maxX < minX) {
+          maxX = minX;
+        }
+        playerShip.position.x = event.canvasPosition.x.clamp(minX, maxX);
+        mobileInputController.isFiring = true;
+      }
+    }
+  }
+
+  @override
+  void onTapUp(TapUpEvent event) {
+    super.onTapUp(event);
+    if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+      mobileInputController.isFiring = false;
+      mobileInputController.touchBankingX = 0.0;
+    }
+  }
+
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    super.onTapCancel(event);
+    if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+      mobileInputController.isFiring = false;
+      mobileInputController.touchBankingX = 0.0;
+    }
+  }
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    if (state == GameState.playing && playerShip.active && !paused) {
+      if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+        final double minX = playerShip.size.x / 2;
+        double maxX = canvasSize.x - minX;
+        if (maxX < minX) {
+          maxX = minX;
+        }
+        playerShip.position.x = event.canvasPosition.x.clamp(minX, maxX);
+        mobileInputController.isFiring = true;
+      }
+    }
+  }
+
+  @override
   void onDragUpdate(DragUpdateEvent event) {
     super.onDragUpdate(event);
-    if (state == GameState.playing) {
-      // Only process drag movement if drag mode is active and touch controls are enabled
+    if (state == GameState.playing && playerShip.active && !paused) {
       if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
-        final screenHeight = canvasSize.y;
-        final touchY = event.canvasEndPosition.y;
-        
-        // Capacitive input is active only on the bottom half of the screen
-        if (touchY > screenHeight * 0.5) {
-          mobileInputController.handleDragUpdate(event.localDelta.x, canvasSize.x);
+        final double minX = playerShip.size.x / 2;
+        double maxX = canvasSize.x - minX;
+        if (maxX < minX) {
+          maxX = minX;
         }
+        final double targetX = event.canvasEndPosition.x.clamp(minX, maxX);
+        
+        final double deltaX = targetX - playerShip.position.x;
+        mobileInputController.touchBankingX = (deltaX * 0.15).clamp(-1.0, 1.0);
+
+        playerShip.position.x = targetX;
+        mobileInputController.isFiring = true;
       }
     }
   }
@@ -365,7 +419,17 @@ class MegamaniaGame extends FlameGame
   void onDragEnd(DragEndEvent event) {
     super.onDragEnd(event);
     if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
-      mobileInputController.handleDragEnd();
+      mobileInputController.isFiring = false;
+      mobileInputController.touchBankingX = 0.0;
+    }
+  }
+
+  @override
+  void onDragCancel(DragCancelEvent event) {
+    super.onDragCancel(event);
+    if (showTouchControls.value && mobileControlStyle.value == MobileControlStyle.drag) {
+      mobileInputController.isFiring = false;
+      mobileInputController.touchBankingX = 0.0;
     }
   }
 

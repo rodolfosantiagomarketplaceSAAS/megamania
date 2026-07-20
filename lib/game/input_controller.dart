@@ -86,6 +86,7 @@ class KeyboardInputController extends InputController {
 class MobileInputController extends InputController {
   double _dragMovementInput = 0.0;
   double _buttonMovementInput = 0.0;
+  double touchBankingX = 0.0;
   
   // Drag decay rate to slowly stop the ship if drag events cease
   static const double _decayRate = 8.0;
@@ -96,11 +97,14 @@ class MobileInputController extends InputController {
     if (_buttonMovementInput != 0.0) {
       return _buttonMovementInput;
     }
+    if (touchBankingX != 0.0) {
+      return touchBankingX;
+    }
     return _dragMovementInput;
   }
 
   @override
-  bool isFiring = false; // Set from the UI fire button
+  bool isFiring = false; // Set from the UI fire button or auto-firing
 
   /// Process drag delta. We divide the delta X by screen width and scale it
   /// to compute the Relative Drag Coefficient.
@@ -136,6 +140,13 @@ class MobileInputController extends InputController {
       } else {
         _dragMovementInput += _decayRate * dt;
         if (_dragMovementInput > 0) _dragMovementInput = 0.0;
+      }
+    }
+    // Decay touch banking
+    if (touchBankingX != 0.0) {
+      touchBankingX = touchBankingX * 0.1; // quickly decay
+      if (touchBankingX.abs() < 0.05) {
+        touchBankingX = 0.0;
       }
     }
   }
