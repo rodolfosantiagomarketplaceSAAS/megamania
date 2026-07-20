@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import '../components/player_ship.dart';
 import '../components/visual_effects.dart';
 import '../components/meteor.dart';
+import '../components/laser.dart';
 import '../services/supabase_service.dart';
 import 'gamepad_helper.dart';
 import 'input_controller.dart';
@@ -204,7 +205,17 @@ class MegamaniaGame extends FlameGame
       _saveScoreToBackend();
     } else {
       playerShip.resetPosition();
-      waveManager.resetWave();
+      
+      // Clear active lasers and meteors to ensure a safe respawn, but keep enemies intact
+      final List<Component> toRemove = [];
+      for (final child in children) {
+        if (child is Laser || child is Meteor || child is MeteorAlert) {
+          toRemove.add(child);
+        }
+      }
+      for (final comp in toRemove) {
+        comp.removeFromParent();
+      }
     }
   }
 
