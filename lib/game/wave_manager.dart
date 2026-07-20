@@ -117,37 +117,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         // Fail gracefully
       }
     } else {
-      // 1. Handle collective border detection for block-movement enemies
-      bool shouldReverse = false;
-      double newDirection = enemyDirection;
-
-      for (final enemy in enemies) {
-        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-          final double halfWidth = enemy.size.x / 2;
-          if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
-            shouldReverse = true;
-            newDirection = -1.0;
-            break;
-          } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
-            shouldReverse = true;
-            newDirection = 1.0;
-            break;
-          }
-        }
-      }
-
-      if (shouldReverse) {
-        enemyDirection = newDirection;
-        for (final enemy in enemies) {
-          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-            if (enemy is HamburgerEnemy) enemy.direction = newDirection;
-            if (enemy is TireEnemy) enemy.direction = newDirection;
-            if (enemy is IronEnemy) enemy.direction = newDirection;
-          }
-        }
-      }
-
-      // 2. Continuous gradual descent for block-movement enemies
+      // 1. Continuous gradual descent for block-movement enemies
       final int cycle = (gameRef.wave - 1) ~/ 8;
       final double difficultyMultiplier = 1.0 + (cycle * 0.15);
       final double descentSpeed = 22.0 * difficultyMultiplier;
