@@ -46,7 +46,11 @@ abstract class EnemyComponent extends PositionComponent
     // Spawn explosion particle effect
     gameRef.add(ExplosionEffect(position: position.clone(), color: explosionColor));
 
-    gameRef.awardKill(pointsReward, energyReward);
+    // Calculate final points: 90 points for all enemies in Cycle 2+ (wave > 8)
+    final int cycle = (gameRef.wave - 1) ~/ 8;
+    final int finalPoints = (cycle > 0) ? 90 : pointsReward;
+
+    gameRef.awardKill(finalPoints, energyReward);
     removeFromParent();
   }
 

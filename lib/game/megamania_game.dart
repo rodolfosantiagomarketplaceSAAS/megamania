@@ -39,6 +39,7 @@ class MegamaniaGame extends FlameGame
   int lives = 3;
   int wave = 1;
   double dreamEnergy = 100.0;
+  int _lastExtraLifeThreshold = 0;
 
   // Camera Shake state
   double _shakeTimer = 0.0;
@@ -130,6 +131,7 @@ class MegamaniaGame extends FlameGame
     score = 0;
     lives = 3;
     wave = 1;
+    _lastExtraLifeThreshold = 0;
     updateBackgroundForWave(1);
     dreamEnergy = maxDreamEnergy;
     state = GameState.playing;
@@ -222,6 +224,17 @@ class MegamaniaGame extends FlameGame
     dreamEnergy += energyReward;
     if (dreamEnergy > maxDreamEnergy) {
       dreamEnergy = maxDreamEnergy;
+    }
+
+    // Award extra life for every 10,000 points
+    final int currentThreshold = score ~/ 10000;
+    if (currentThreshold > _lastExtraLifeThreshold) {
+      final int extraLives = currentThreshold - _lastExtraLifeThreshold;
+      lives += extraLives;
+      _lastExtraLifeThreshold = currentThreshold;
+      try {
+        playPowerUp();
+      } catch (_) {}
     }
   }
 

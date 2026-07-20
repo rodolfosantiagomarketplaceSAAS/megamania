@@ -101,8 +101,15 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       _inTransition = true;
       _transitionTimer = 0.0;
       
-      // Award massive phase bonus
-      gameRef.awardKill(300 * gameRef.wave, 35.0);
+      // Award energy bonus equal to remaining energy units * current enemy point value
+      final int phaseType = (gameRef.wave - 1) % 8;
+      final int cycle = (gameRef.wave - 1) ~/ 8;
+      final int baseEnemyPoints = (phaseType + 2) * 10;
+      final int enemyPoints = (cycle > 0) ? 90 : baseEnemyPoints;
+      final int energyUnits = gameRef.dreamEnergy.round().clamp(0, 100);
+      final int bonusScore = energyUnits * enemyPoints;
+      
+      gameRef.awardKill(bonusScore, 35.0);
 
       try {
         gameRef.playPowerUp();
@@ -184,8 +191,8 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   void _spawnAllEnemies() {
     final int phaseType = (gameRef.wave - 1) % 8;
     final int cycle = (gameRef.wave - 1) ~/ 8;
-    // Speed increases by 25% per full cycle (after phase 8)
-    final double difficultyMultiplier = 1.0 + (cycle * 0.25);
+    // Speed increases by 15% per full cycle (after phase 8)
+    final double difficultyMultiplier = 1.0 + (cycle * 0.15);
 
     final double screenWidth = gameRef.canvasSize.x;
     final double margin = 80.0; // Increased margin to fit staggered grid safely inside walls
