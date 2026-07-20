@@ -117,50 +117,43 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         // Fail gracefully
       }
     } else {
-      // Handle collective border detection for block-movement enemies
-      bool shouldDescend = false;
+      // 1. Handle collective border detection for block-movement enemies
+      bool shouldReverse = false;
       double newDirection = enemyDirection;
 
-      // Animate smooth Y descent
-      if (_descendRemaining > 0.0) {
-        final double step = 150.0 * dt; // Descent speed of 150 pixels per second
-        final double actualStep = step > _descendRemaining ? _descendRemaining : step;
-        _descendRemaining -= actualStep;
-
-        for (final enemy in enemies) {
-          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-            enemy.position.y += actualStep;
+      for (final enemy in enemies) {
+        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+          final double halfWidth = enemy.size.x / 2;
+          if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
+            shouldReverse = true;
+            newDirection = -1.0;
+            break;
+          } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
+            shouldReverse = true;
+            newDirection = 1.0;
+            break;
           }
         }
       }
 
-      if (_descendCooldownTimer >= 0.05 && _descendRemaining <= 0.0) {
-        for (final enemy in enemies) {
-          if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-            final double halfWidth = enemy.size.x / 2;
-            if (enemyDirection > 0.0 && enemy.position.x >= gameRef.canvasSize.x - halfWidth) {
-              shouldDescend = true;
-              newDirection = -1.0;
-              break;
-            } else if (enemyDirection < 0.0 && enemy.position.x <= halfWidth) {
-              shouldDescend = true;
-              newDirection = 1.0;
-              break;
-            }
-          }
-        }
-      }
-
-      if (shouldDescend) {
-        _descendCooldownTimer = 0.0; // reset cooldown
+      if (shouldReverse) {
         enemyDirection = newDirection;
-        _descendRemaining = 36.0; // Start smooth descent of 36 pixels
         for (final enemy in enemies) {
           if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
             if (enemy is HamburgerEnemy) enemy.direction = newDirection;
             if (enemy is TireEnemy) enemy.direction = newDirection;
             if (enemy is IronEnemy) enemy.direction = newDirection;
           }
+        }
+      }
+
+      // 2. Continuous gradual descent for block-movement enemies
+      final int cycle = (gameRef.wave - 1) ~/ 8;
+      final double difficultyMultiplier = 1.0 + (cycle * 0.15);
+      final double descentSpeed = 22.0 * difficultyMultiplier;
+      for (final enemy in enemies) {
+        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
+          enemy.position.y += descentSpeed * dt;
         }
       }
 
@@ -199,17 +192,18 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     final double availableWidth = screenWidth - (margin * 2);
 
     if (phaseType == 0) {
-      // Phase 1: Grid of Hamburgers (3 rows)
-      int cols = (availableWidth / 80).floor() + 1;
-      cols = cols.clamp(4, 8);
+      // Phase 1: Staggered grid of Hamburgers (3 rows of 6 columns)
       const int rows = 3;
-      final double spacingX = availableWidth / (cols - 1);
+      const int cols = 6;
+      // We have 5 steps of spacing, plus the half-step offset in row 1, total 5.5 spacing steps.
+      final double spacingX = availableWidth / 5.5;
       const double spacingY = 45.0; // Vertical spacing between rows
 
       int index = 0;
       for (int r = 0; r < rows; r++) {
+        final double rowOffset = (r == 1) ? spacingX / 2 : 0.0;
         for (int c = 0; c < cols; c++) {
-          final double xPos = margin + c * spacingX;
+          final double xPos = margin + c * spacingX + rowOffset;
           final double yPos = 60.0 + r * spacingY;
 
           final EnemyComponent enemy = _createEnemy(phaseType, xPos, yPos, difficultyMultiplier, index);
