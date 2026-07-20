@@ -54,6 +54,17 @@ class PlayerShip extends PositionComponent
   }
 
   @override
+  void onGameResize(Vector2 newSize) {
+    super.onGameResize(newSize);
+    // Dynamically adjust Y position relative to the new screen height
+    position.y = newSize.y - 70.0;
+    
+    // Clamp X position within the new screen boundaries
+    final double halfWidth = size.x / 2;
+    position.x = position.x.clamp(halfWidth, newSize.x - halfWidth);
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
     
