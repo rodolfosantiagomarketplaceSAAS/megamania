@@ -71,7 +71,15 @@ class KeyboardInputController extends InputController {
   }
 
   @override
-  void update(double dt) {}
+  void update(double dt) {
+    // Decay mouse banking input
+    if (useMouseInput) {
+      mouseInputX = mouseInputX * 0.1; // quickly decay
+      if (mouseInputX.abs() < 0.05) {
+        mouseInputX = 0.0;
+      }
+    }
+  }
 }
 
 /// Mobile implementation utilizing relative drag or virtual D-pad buttons.

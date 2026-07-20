@@ -57,10 +57,11 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
               // Retro-themed title
               Text(
                 'MEGAMANIA',
@@ -505,6 +506,7 @@ class _MainMenuOverlayState extends State<MainMenuOverlay> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),

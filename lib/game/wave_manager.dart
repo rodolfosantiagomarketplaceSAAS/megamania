@@ -158,8 +158,12 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       }
 
       // Handle collective bottom wrapping: if ANY enemy reaches near the bottom, shift all up together
+      double minEnemyY = double.infinity;
       double maxEnemyY = 0.0;
       for (final enemy in enemies) {
+        if (enemy.position.y < minEnemyY) {
+          minEnemyY = enemy.position.y;
+        }
         if (enemy.position.y > maxEnemyY) {
           maxEnemyY = enemy.position.y;
         }
@@ -167,7 +171,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
 
       final double wrapThreshold = gameRef.canvasSize.y;
       if (maxEnemyY > wrapThreshold) {
-        final double dy = maxEnemyY - 60.0;
+        final double dy = minEnemyY - 60.0;
         if (dy > 0.0) {
           for (final enemy in enemies) {
             enemy.position.y -= dy;

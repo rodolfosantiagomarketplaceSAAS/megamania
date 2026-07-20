@@ -81,7 +81,7 @@ class MegamaniaGame extends FlameGame
   final PlayerShip playerShip = PlayerShip();
   final WaveManager waveManager = WaveManager();
 
-  late final SpaceBackground spaceBackground;
+  SpaceBackground? spaceBackground;
   Sprite? _classicBackground;
   Sprite? _candyBackground;
 
@@ -97,11 +97,18 @@ class MegamaniaGame extends FlameGame
     // Load background images and add background component
     try {
       _classicBackground = await loadSprite('background.png');
-      _candyBackground = await loadSprite('background_candy.jpg');
-      spaceBackground = SpaceBackground(sprite: _classicBackground!);
-      add(spaceBackground);
     } catch (e) {
-      debugPrint('Error loading background image: $e');
+      debugPrint('Error loading classic background: $e');
+    }
+    try {
+      _candyBackground = await loadSprite('background_candy.jpg');
+    } catch (e) {
+      debugPrint('Error loading candy background: $e');
+    }
+
+    if (_classicBackground != null) {
+      spaceBackground = SpaceBackground(sprite: _classicBackground!);
+      add(spaceBackground!);
     }
 
     // Add moving starfield
@@ -165,12 +172,12 @@ class MegamaniaGame extends FlameGame
   void updateBackgroundForWave(int wave) {
     final int phaseType = (wave - 1) % 8;
     if (phaseType == 1) {
-      if (_candyBackground != null) {
-        spaceBackground.sprite = _candyBackground;
+      if (_candyBackground != null && spaceBackground != null) {
+        spaceBackground!.sprite = _candyBackground;
       }
     } else {
-      if (_classicBackground != null) {
-        spaceBackground.sprite = _classicBackground;
+      if (_classicBackground != null && spaceBackground != null) {
+        spaceBackground!.sprite = _classicBackground;
       }
     }
   }
@@ -370,6 +377,8 @@ class MegamaniaGame extends FlameGame
       // Only switch to mouse control if the mouse has actually moved significantly (more than 2 pixels)
       if (_lastMouseX >= 0.0 && (localX - _lastMouseX).abs() > 2.0) {
         keyboardInputController.useMouseInput = true;
+        // Set the relative movement direction for banking visual effect
+        keyboardInputController.mouseInputX = ((localX - _lastMouseX) * 0.15).clamp(-1.0, 1.0);
       }
       _lastMouseX = localX;
 

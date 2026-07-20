@@ -95,9 +95,10 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               Text(
                 'GAME OVER',
                 style: GoogleFonts.orbitron(
@@ -311,6 +312,7 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
                 ],
               ),
             ],
+          ),
           ),
         ),
       ),

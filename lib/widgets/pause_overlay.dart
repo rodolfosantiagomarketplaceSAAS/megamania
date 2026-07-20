@@ -54,10 +54,11 @@ class _PauseOverlayState extends State<PauseOverlay> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
               // Paused Title
               Text(
                 'MISSION PAUSED',
@@ -252,6 +253,7 @@ class _PauseOverlayState extends State<PauseOverlay> {
                 ),
               ),
             ],
+          ),
           ),
         ),
       ),
