@@ -107,19 +107,11 @@ class PlayerShip extends PositionComponent
     final bool isFiring = gameRef.keyboardInputController.isFiring ||
         gameRef.mobileInputController.isFiring;
 
-    // Handle weapon systems fire cooldowns
-    _fireCooldown += dt;
+    // Megamania Classic Rule: Only 1 active player laser permitted on screen at a time
+    final bool hasActivePlayerLaser = gameRef.children.any((c) => c is Laser && c.isPlayerLaser);
 
-    if (isFiring) {
-      if (_fireCooldown >= fireInterval) {
-        _fireCooldown = 0.0;
-        _fireLasers();
-      }
-    } else {
-      // Keeps the weapon ready to fire immediately when pressed
-      if (_fireCooldown > fireInterval) {
-        _fireCooldown = fireInterval;
-      }
+    if (isFiring && !hasActivePlayerLaser) {
+      _fireLasers();
     }
   }
 

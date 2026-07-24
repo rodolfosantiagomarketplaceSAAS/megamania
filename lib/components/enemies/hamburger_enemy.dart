@@ -39,14 +39,6 @@ class HamburgerEnemy extends EnemyComponent {
     // Move horizontally (direction and descend managed collectively by WaveManager)
     position.x += speedX * direction * dt;
 
-    // Screen wrapping horizontally
-    final double halfWidth = size.x / 2;
-    if (direction > 0.0 && position.x - halfWidth > gameRef.canvasSize.x) {
-      position.x = -halfWidth;
-    } else if (direction < 0.0 && position.x + halfWidth < 0.0) {
-      position.x = gameRef.canvasSize.x + halfWidth;
-    }
-
     // Aerodynamic Roll (smooth Z-axis tilt when moving)
     final double targetAngle = direction * 0.08; // tilt slightly based on movement direction
     angle = angle + (targetAngle - angle) * 6.0 * dt;

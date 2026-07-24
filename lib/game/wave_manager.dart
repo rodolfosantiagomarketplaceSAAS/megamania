@@ -19,8 +19,10 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
 
   // Level transition status
   bool _inTransition = false;
+  bool _isCountingDownEnergy = false;
+  double _energyTickTimer = 0.0;
   double _transitionTimer = 0.0;
-  static const double transitionDelay = 2.2; // Seconds between levels
+  static const double transitionDelay = 1.5; // Seconds between levels
 
   // Flag to wait for Flame tree integration before verifying active enemies
   bool _waveJustSpawned = false;
@@ -32,6 +34,8 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
   void resetWave() {
     clearActiveEnemies();
     _inTransition = false;
+    _isCountingDownEnergy = false;
+    _energyTickTimer = 0.0;
     _transitionTimer = 0.0;
     
     final int phaseType = (gameRef.wave - 1) % 8;
@@ -39,7 +43,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     enemyDirection = (phaseType == 0) ? -1.0 : 1.0;
     
     _waveJustSpawned = true;
-    _descendCooldownTimer = 0.05; // Allow immediate descend if wall is hit (low cooldown for precision)
+    _descendCooldownTimer = 0.05; // Allow immediate descend if wall is hit
     _descendRemaining = 0.0;
     
     _spawnAllEnemies();
@@ -68,6 +72,37 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
     // Track cooldown between block descends
     _descendCooldownTimer += dt;
 
+    // 1. Megamania End-of-Wave Energy Tally Countdown
+    if (_isCountingDownEnergy) {
+      _energyTickTimer += dt;
+      if (_energyTickTimer >= 0.02) { // Rapid count-down tick (20ms)
+        _energyTickTimer = 0.0;
+        if (gameRef.dreamEnergy > 0.0) {
+          final int phaseType = (gameRef.wave - 1) % 8;
+          final int cycle = (gameRef.wave - 1) ~/ 8;
+          final int baseEnemyPoints = (phaseType + 2) * 10;
+          final int enemyPoints = (cycle > 0) ? 90 : baseEnemyPoints;
+
+          final double drainUnit = gameRef.dreamEnergy > 2.0 ? 2.0 : gameRef.dreamEnergy;
+          gameRef.dreamEnergy -= drainUnit;
+          gameRef.score += (drainUnit * (enemyPoints / 2.0)).round();
+
+          try {
+            gameRef.playClick();
+          } catch (_) {}
+        } else {
+          gameRef.dreamEnergy = 0.0;
+          _isCountingDownEnergy = false;
+          _inTransition = true;
+          _transitionTimer = 0.0;
+          try {
+            gameRef.playPowerUp();
+          } catch (_) {}
+        }
+      }
+      return;
+    }
+
     if (_inTransition) {
       _transitionTimer += dt;
       if (_transitionTimer >= transitionDelay) {
@@ -87,43 +122,66 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
       }
     }
 
-    // Check if all spawned enemies are cleared to advance waves
+    // Check active enemies on screen
     final List<EnemyComponent> enemies = [];
+    final List<EnemyComponent> blockEnemies = [];
     bool hasActiveEnemies = false;
+
     for (final child in gameRef.children) {
       if (child is EnemyComponent) {
         hasActiveEnemies = true;
         enemies.add(child);
+        if (child is HamburgerEnemy || child is TireEnemy || child is IronEnemy) {
+          blockEnemies.add(child);
+        }
       }
     }
 
     if (!hasActiveEnemies) {
-      _inTransition = true;
-      _transitionTimer = 0.0;
-      
-      // Award energy bonus equal to remaining energy units * current enemy point value
-      final int phaseType = (gameRef.wave - 1) % 8;
-      final int cycle = (gameRef.wave - 1) ~/ 8;
-      final int baseEnemyPoints = (phaseType + 2) * 10;
-      final int enemyPoints = (cycle > 0) ? 90 : baseEnemyPoints;
-      final int energyUnits = gameRef.dreamEnergy.round().clamp(0, 100);
-      final int bonusScore = energyUnits * enemyPoints;
-      
-      gameRef.awardKill(bonusScore, 35.0);
-
-      try {
-        gameRef.playPowerUp();
-      } catch (e) {
-        // Fail gracefully
-      }
+      // Wave cleared: start energy tally countdown!
+      _isCountingDownEnergy = true;
+      _energyTickTimer = 0.0;
     } else {
-      // 1. Continuous gradual descent for block-movement enemies
-      final int cycle = (gameRef.wave - 1) ~/ 8;
-      final double difficultyMultiplier = 1.0 + (cycle * 0.15);
-      final double descentSpeed = 22.0 * difficultyMultiplier;
-      for (final enemy in enemies) {
-        if (enemy is HamburgerEnemy || enemy is TireEnemy || enemy is IronEnemy) {
-          enemy.position.y += descentSpeed * dt;
+      // Handle block-movement wall bouncing and stepping down
+      if (blockEnemies.isNotEmpty) {
+        // Sync directions
+        for (final enemy in blockEnemies) {
+          if (enemy is HamburgerEnemy) enemy.direction = enemyDirection;
+          if (enemy is TireEnemy) enemy.direction = enemyDirection;
+          if (enemy is IronEnemy) enemy.direction = enemyDirection;
+        }
+
+        // Determine edge boundaries of the block formation
+        double minX = double.infinity;
+        double maxX = -double.infinity;
+        for (final enemy in blockEnemies) {
+          final double left = enemy.position.x - enemy.size.x / 2;
+          final double right = enemy.position.x + enemy.size.x / 2;
+          if (left < minX) minX = left;
+          if (right > maxX) maxX = right;
+        }
+
+        const double sideMargin = 20.0;
+        if (_descendCooldownTimer >= 0.25) {
+          bool hitWall = false;
+          if (enemyDirection > 0.0 && maxX >= gameRef.canvasSize.x - sideMargin) {
+            enemyDirection = -1.0;
+            hitWall = true;
+          } else if (enemyDirection < 0.0 && minX <= sideMargin) {
+            enemyDirection = 1.0;
+            hitWall = true;
+          }
+
+          if (hitWall) {
+            _descendCooldownTimer = 0.0;
+            const double stepDownDistance = 24.0;
+            for (final enemy in blockEnemies) {
+              if (enemy is HamburgerEnemy) enemy.direction = enemyDirection;
+              if (enemy is TireEnemy) enemy.direction = enemyDirection;
+              if (enemy is IronEnemy) enemy.direction = enemyDirection;
+              enemy.position.y += stepDownDistance;
+            }
+          }
         }
       }
 
@@ -139,7 +197,7 @@ class WaveManager extends Component with HasGameRef<MegamaniaGame> {
         }
       }
 
-      final double wrapThreshold = gameRef.canvasSize.y;
+      final double wrapThreshold = gameRef.canvasSize.y - 60.0;
       if (maxEnemyY > wrapThreshold) {
         final double dy = minEnemyY - 60.0;
         if (dy > 0.0) {

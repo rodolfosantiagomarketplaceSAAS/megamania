@@ -36,9 +36,7 @@ class Laser extends PositionComponent
  
     // Apply horizontal momentum and follow ship movement if player laser
     if (isPlayerLaser) {
-      final double targetX = gameRef.playerShip.position.x + offsetX;
-      const double followFactor = 2.5; // Interpolation coefficient (higher = follows faster)
-      position.x += (targetX - position.x) * followFactor * dt;
+      position.x = gameRef.playerShip.position.x + offsetX;
     }
 
     // Self-destruct when exiting screens (checking both vertical and horizontal bounds)
